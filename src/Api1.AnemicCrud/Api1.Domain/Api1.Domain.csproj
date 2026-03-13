@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api1.Domain — Anemic domain entities.
+       No dependencies on any other project or infrastructure package.
+       Entities are pure property bags with public setters (intentionally
+       anemic for educational contrast with API 2+).
+       ================================================================ -->
+
+</Project>

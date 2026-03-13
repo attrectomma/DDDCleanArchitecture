@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api1.Application — Service interfaces, implementations, DTOs,
+       validators, and exception types.
+       Depends on Api1.Domain but never on Infrastructure or WebApi.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api1.Domain\Api1.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+</Project>

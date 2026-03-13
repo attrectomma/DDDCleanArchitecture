@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api1.WebApi — ASP.NET Core Web API host for the Anemic CRUD tier.
+       Thin controllers that delegate to application services.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api1.Application\Api1.Application.csproj" />
+    <ProjectReference Include="..\Api1.Infrastructure\Api1.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

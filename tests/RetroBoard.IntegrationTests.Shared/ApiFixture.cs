@@ -67,8 +67,10 @@ public abstract class ApiFixture<TProgram> : IAsyncLifetime
     /// <summary>
     /// Sets up the <see cref="WebApplicationFactory{TEntryPoint}"/>, applies
     /// migrations, creates the HTTP client, and initializes Respawn.
+    /// Override in subclasses to add pre-initialization steps (e.g., starting
+    /// a Postgres container) before calling <c>base.InitializeAsync()</c>.
     /// </summary>
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         _factory = new WebApplicationFactory<TProgram>()
             .WithWebHostBuilder(builder =>
@@ -126,8 +128,10 @@ public abstract class ApiFixture<TProgram> : IAsyncLifetime
 
     /// <summary>
     /// Disposes the <see cref="WebApplicationFactory{TEntryPoint}"/> and HTTP client.
+    /// Override in subclasses to add post-disposal steps (e.g., stopping
+    /// a Postgres container) after calling <c>base.DisposeAsync()</c>.
     /// </summary>
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         Client.Dispose();
         if (_factory is not null)
