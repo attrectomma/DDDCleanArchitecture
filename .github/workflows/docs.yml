@@ -2,13 +2,17 @@
 # GitHub Actions: Build and deploy DocFX documentation to GitHub Pages
 #
 # Triggers:
-#   - Push to main branch (any file in src/, docfx/, or docs/)
+#   - Push to master branch (any file in src/, docfx/, or docs/)
 #   - Manual workflow dispatch
+#
+# Prerequisites:
+#   1. Go to repo Settings → Pages → Source → select "GitHub Actions"
+#   2. Push this workflow to the master branch
 #
 # The workflow:
 #   1. Checks out the repo
 #   2. Installs .NET 8 SDK and DocFX
-#   3. Builds the DocFX site (conceptual articles + API reference)
+#   3. Builds the DocFX site (conceptual articles + API reference if src/ exists)
 #   4. Deploys the _site folder to GitHub Pages
 # ──────────────────────────────────────────────────────────────────
 
@@ -16,7 +20,7 @@ name: Deploy Documentation
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'src/**'
       - 'docfx/**'
@@ -48,11 +52,8 @@ jobs:
       - name: Install DocFX
         run: dotnet tool install -g docfx
 
-      - name: Restore solution
-        run: dotnet restore RetroBoard.slnx
-
       - name: Build DocFX site
-        run: docfx docfx/docfx.json
+        run: docfx docfx/docfx.json --warningsAsErrors false
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

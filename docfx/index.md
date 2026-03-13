@@ -40,7 +40,7 @@ sophisticated architecture:
 
 ```bash
 # Clone and run
-git clone https://github.com/your-org/DDDCleanArchitecture.git
+git clone https://github.com/attrectomma/DDDCleanArchitecture.git
 cd DDDCleanArchitecture
 
 # Start PostgreSQL

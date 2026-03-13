@@ -1,23 +1,9 @@
 {
-  "metadata": [
-    {
-      "src": [
-        {
-          "files": [ "src/**/*.csproj" ],
-          "src": ".."
-        }
-      ],
-      "dest": "api",
-      "properties": {
-        "TargetFramework": "net8.0"
-      }
-    }
-  ],
   "build": {
     "content": [
       {
         "files": [ "**/*.{md,yml}" ],
-        "exclude": [ "_site/**", "obj/**" ]
+        "exclude": [ "_site/**", "obj/**", "api/**" ]
       }
     ],
     "resource": [
@@ -34,16 +20,8 @@
       "_enableNewTab": true,
       "_disableContribution": false,
       "_gitContribute": {
-        "repo": "https://github.com/your-org/DDDCleanArchitecture",
-        "branch": "main"
-      }
-    },
-    "markdownEngineProperties": {
-      "alerts": {
-        "Important": "important",
-        "Note": "note",
-        "Tip": "tip",
-        "Warning": "warning"
+        "repo": "https://github.com/attrectomma/DDDCleanArchitecture",
+        "branch": "master"
       }
     }
   }
