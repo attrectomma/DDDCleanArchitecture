@@ -154,3 +154,26 @@ When generating code, check which API tier you are working in:
 - **API 3:** Aggregates exist. There are only aggregate-level repositories. No per-entity repositories.
 - **API 4:** Vote is its own aggregate. Cross-aggregate checks use DB constraints as safety nets.
 - **API 5:** No services — only MediatR command/query handlers. Query handlers bypass repositories and use DbContext directly (CQRS).
+
+---
+
+## Documentation Sync Rules (DocFX)
+
+This repository includes a **DocFX documentation site** in the `docfx/` folder that is deployed to GitHub Pages. The documentation must stay in sync with the code.
+
+1. **Any change to an API's code must be reflected in the corresponding DocFX documentation.** If you modify a pattern, add a new entity, change an invariant, or alter behavior in any API project, update the relevant files in `docfx/`:
+   - `docfx/concepts/` — Core concept explanations (entities, repositories, aggregates, etc.)
+   - `docfx/migration/` — Per-API tier guides (`api1-anemic-crud.md` through `api5-cqrs-mediatr.md`)
+   - `docfx/architecture/` — Layer descriptions, dependency rules, project structure
+   - `docfx/patterns/` — Design pattern explanations (Repository, UoW, CQRS, Mediator, Domain Events, Interceptors)
+   - `docfx/testing/` — Test infrastructure and strategy documentation
+
+2. **Code examples in documentation must match actual code.** If a code snippet in a `.md` file shows a method signature or class structure, it must reflect the current implementation. Do not leave stale examples.
+
+3. **New concepts or patterns introduced in code must get a documentation page.** If you add a new pattern, cross-cutting concern, or architectural decision, create a new `.md` file in the appropriate `docfx/` subfolder and add it to the section's `toc.yml`.
+
+4. **XML doc comments are the source of truth for API reference.** DocFX generates API reference pages from `<summary>`, `<param>`, `<returns>`, `<remarks>`, and `<exception>` XML doc comments. Keep these complete and accurate.
+
+5. **`// DESIGN:` comments must have a corresponding explanation in `docfx/`.** If you add a `// DESIGN:` or `// DESIGN (CQRS foreshadowing):` comment in code, ensure the concept it references is explained in the DocFX site.
+
+6. **Update the tier comparison tables** in `docfx/migration/index.md` and `README.md` if any metric changes (repository count, handler count, concurrency behavior, etc.).

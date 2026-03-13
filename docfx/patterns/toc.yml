@@ -1,0 +1,14 @@
+- name: Patterns Overview
+  href: index.md
+- name: Repository Pattern
+  href: repository-pattern.md
+- name: Unit of Work Pattern
+  href: unit-of-work-pattern.md
+- name: CQRS
+  href: cqrs.md
+- name: Mediator Pattern
+  href: mediator.md
+- name: Domain Events
+  href: domain-events.md
+- name: Interceptor Pattern
+  href: interceptors.md

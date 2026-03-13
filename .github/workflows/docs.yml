@@ -1,0 +1,71 @@
+# ──────────────────────────────────────────────────────────────────
+# GitHub Actions: Build and deploy DocFX documentation to GitHub Pages
+#
+# Triggers:
+#   - Push to main branch (any file in src/, docfx/, or docs/)
+#   - Manual workflow dispatch
+#
+# The workflow:
+#   1. Checks out the repo
+#   2. Installs .NET 8 SDK and DocFX
+#   3. Builds the DocFX site (conceptual articles + API reference)
+#   4. Deploys the _site folder to GitHub Pages
+# ──────────────────────────────────────────────────────────────────
+
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docfx/**'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
+
+      - name: Restore solution
+        run: dotnet restore RetroBoard.slnx
+
+      - name: Build DocFX site
+        run: docfx docfx/docfx.json
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docfx/_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

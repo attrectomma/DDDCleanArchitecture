@@ -1,0 +1,50 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "src/**/*.csproj" ],
+          "src": ".."
+        }
+      ],
+      "dest": "api",
+      "properties": {
+        "TargetFramework": "net8.0"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [ "**/*.{md,yml}" ],
+        "exclude": [ "_site/**", "obj/**" ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [ "images/**", "diagrams/**" ]
+      }
+    ],
+    "output": "_site",
+    "template": [ "default", "modern" ],
+    "globalMetadata": {
+      "_appTitle": "RetroBoard — Clean Architecture & DDD Learning Guide",
+      "_appFooter": "RetroBoard Educational Repository — Built with DocFX",
+      "_enableSearch": true,
+      "_enableNewTab": true,
+      "_disableContribution": false,
+      "_gitContribute": {
+        "repo": "https://github.com/your-org/DDDCleanArchitecture",
+        "branch": "main"
+      }
+    },
+    "markdownEngineProperties": {
+      "alerts": {
+        "Important": "important",
+        "Note": "note",
+        "Tip": "tip",
+        "Warning": "warning"
+      }
+    }
+  }
+}

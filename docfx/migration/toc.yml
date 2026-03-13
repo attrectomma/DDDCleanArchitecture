@@ -1,0 +1,12 @@
+- name: Migration Path Overview
+  href: index.md
+- name: "API 1 — Anemic CRUD"
+  href: api1-anemic-crud.md
+- name: "API 2 — Rich Domain"
+  href: api2-rich-domain.md
+- name: "API 3 — Aggregates"
+  href: api3-aggregates.md
+- name: "API 4 — Split Aggregates"
+  href: api4-split-aggregates.md
+- name: "API 5 — CQRS + MediatR"
+  href: api5-cqrs-mediatr.md
