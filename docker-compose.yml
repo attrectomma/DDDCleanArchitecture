@@ -1,0 +1,34 @@
+# ──────────────────────────────────────────────────────────────────
+# Docker Compose — Local Development Infrastructure
+#
+# Provides a PostgreSQL instance for all five APIs.
+# Each API uses a separate database within the same server.
+#
+# Usage:
+#   docker compose up -d        (start)
+#   docker compose down -v      (stop and remove volumes)
+# ──────────────────────────────────────────────────────────────────
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: retroboard-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: retroboard
+      POSTGRES_PASSWORD: retroboard_dev
+      POSTGRES_DB: retroboard
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retroboard"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local

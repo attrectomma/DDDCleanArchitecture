@@ -308,6 +308,13 @@ public interface IProjectRepository
 /// DESIGN: We always load the complete aggregate because the
 /// aggregate root needs the full state to enforce invariants.
 /// This is expensive for large retros — a known trade-off at this tier.
+///
+/// DESIGN (CQRS foreshadowing): This same expensive query runs for
+/// BOTH writes (where the full state is needed for invariants) AND
+/// reads (where we only need a DTO). Loading the full aggregate graph
+/// with change tracking just to map it to a response is wasteful.
+/// API 5 introduces CQRS to separate the read path (lightweight
+/// no-tracking projections) from the write path (full aggregate loading).
 /// </remarks>
 public class RetroBoardRepository : IRetroBoardRepository
 {
@@ -337,6 +344,12 @@ public class RetroBoardRepository : IRetroBoardRepository
 ///   2. Call aggregate method (which enforces invariants)
 ///   3. Save via UoW
 /// All business logic lives in the aggregate root.
+///
+/// DESIGN (CQRS foreshadowing): Notice that GET operations (not shown
+/// here) also load the full aggregate via the repository, even though
+/// they only need a read-only view. This means read-heavy traffic pays
+/// the same cost as writes. API 5 addresses this with CQRS — queries
+/// bypass the aggregate and project directly from the database.
 /// </remarks>
 public class RetroBoardService : IRetroBoardService
 {

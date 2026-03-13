@@ -320,6 +320,12 @@ The repository no longer eager-loads votes:
 ///   - Faster aggregate loading.
 ///   - Smaller memory footprint.
 ///   - No write contention between note edits and vote operations.
+///
+/// DESIGN (CQRS foreshadowing): Even though we split Vote out (reducing
+/// load size), we still load the full RetroBoard aggregate for EVERY
+/// operation — including GET requests that only need a read-only view.
+/// API 5's CQRS pattern addresses this: queries bypass the aggregate
+/// entirely and project directly from the database with no-tracking.
 /// </remarks>
 public class RetroBoardRepository : IRetroBoardRepository
 {

@@ -211,7 +211,7 @@ DELETE /api/notes/{noteId}/votes/{voteId}
 | **Phase 2** | API 2 — Rich Domain (refactor business logic into entities) |
 | **Phase 3** | API 3 — Aggregate Design (Project + Retro aggregates, consistency) |
 | **Phase 4** | API 4 — Split Vote aggregate, cross-aggregate checks |
-| **Phase 5** | API 5 — Behavior-centric + MediatR |
+| **Phase 5** | API 5 — Behavior-centric + CQRS + MediatR |
 | **Phase 6** | Documentation: DesignDecisions.md, per-API `.md` comparisons |
 
 ---
@@ -231,8 +231,9 @@ DELETE /api/notes/{noteId}/votes/{voteId}
 | Decision | API 1 | API 2 | API 3 | API 4 | API 5 |
 |----------|-------|-------|-------|-------|-------|
 | Business logic location | Service layer | Domain entities | Aggregate roots | Aggregate roots | Command handlers + domain |
-| Repository granularity | Per-table | Per-table | Per-aggregate | Per-aggregate (2 aggs) | Per-aggregate |
+| Repository granularity | Per-table | Per-table | Per-aggregate | Per-aggregate (2 aggs) | Per-aggregate (writes only) |
 | Consistency boundary | None (hope & pray) | None | Aggregate = txn boundary | Smaller aggregates | Aggregate + domain events |
 | Concurrency handling | None | None | Optimistic (version/xmin) | Optimistic | Optimistic |
 | Write contention risk | N/A | N/A | High (big Retro agg) | Low (Vote split out) | Low |
+| Read/Write separation (CQRS) | No | No | No | No | Yes — queries bypass aggregates |
 | Mediator | No | No | No | No | Yes (MediatR) |

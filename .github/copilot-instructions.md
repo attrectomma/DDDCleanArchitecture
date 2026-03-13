@@ -1,0 +1,156 @@
+# Copilot Instructions — .NET Best Practices for AI-Assisted Engineering
+
+This file defines rules and conventions for AI code generation in this repository.
+These instructions apply to GitHub Copilot, Copilot Chat, and any AI-assisted
+development tooling used by contributors.
+
+---
+
+## Project Context
+
+This is an educational .NET 8 repository with five Web APIs demonstrating
+progressive architectural maturity (Anemic CRUD → DDD + CQRS). Each API has
+its own set of four projects (Domain, Application, Infrastructure, WebApi)
+and a corresponding integration test project. All APIs share a common
+integration test base in `tests/RetroBoard.IntegrationTests.Shared/`.
+
+---
+
+## General Rules
+
+1. **Target .NET 8 (LTS).** Do not use preview features or APIs from .NET 9+.
+2. **Follow the existing project structure.** Each API has four layers: Domain, Application, Infrastructure, WebApi. Do not merge layers or add new ones unless the plan documents explicitly call for it.
+3. **One class per file.** File name must match the class/record/interface name.
+4. **Use file-scoped namespaces** (`namespace X;` not `namespace X { }`).
+5. **Use `Guid` for all entity IDs.** Never use `int` or `long` for primary keys.
+6. **Nullable reference types are enabled.** Never suppress nullable warnings with `!` unless there is a documented reason. Prefer null checks and guard clauses.
+7. **Do not use `var` for non-obvious types.** Use explicit types when the right-hand side does not clearly indicate the type.
+8. **Prefer `async/await` over `.Result` or `.Wait()`.** Never block on async code.
+9. **Use `CancellationToken`** on all async method signatures and pass it through the entire call chain.
+
+---
+
+## Architecture Rules
+
+### Domain Layer
+- Entities must inherit from `AuditableEntityBase`.
+- Domain entities must **never** reference infrastructure concerns (no EF Core attributes, no `DbContext`).
+- Use **private setters** and constructors for entity properties (except in API 1, which is intentionally anemic).
+- Domain exceptions (e.g., `InvariantViolationException`) live in the Domain layer.
+- Repository **interfaces** are defined in the Domain layer (API 3+). Implementations are in Infrastructure.
+
+### Application Layer
+- Services (API 1–4) or Command/Query handlers (API 5) live here.
+- DTOs (Requests/Responses) live here, separated into `Requests/` and `Responses/` folders.
+- Validators (FluentValidation) live here.
+- The Application layer depends on Domain but **never** on Infrastructure or WebApi.
+
+### Infrastructure Layer
+- EF Core `DbContext`, entity configurations (`IEntityTypeConfiguration<T>`), repositories, interceptors, and `UnitOfWork` live here.
+- Use **Fluent API** for all EF Core configuration. Do not use data annotations on entities.
+- All entities must have a global query filter for soft delete: `.HasQueryFilter(e => e.DeletedAt == null)`.
+- Apply unique indexes via Fluent API for all business uniqueness constraints.
+- Use `UseXminAsConcurrencyToken()` for aggregate roots in API 3+.
+
+### WebApi Layer
+- Controllers must be thin — delegate to services (API 1–4) or `IMediator` (API 5).
+- Return Problem Details (RFC 7807) for all error responses.
+- Use `[ApiController]` and `[Route]` attributes. Use typed route parameters (e.g., `{id:guid}`).
+
+---
+
+## Code Comments and Documentation
+
+This is an **educational repository**. Comments are critical.
+
+1. **All public types and members must have XML doc comments** (`<summary>`, `<param>`, `<returns>`, `<remarks>`, `<exception>`).
+2. **Use `// DESIGN:` comments** to explain architectural decisions, trade-offs, and cross-tier comparisons.
+3. **Use `// DESIGN (CQRS foreshadowing):` comments** in API 3/4 to hint at CQRS benefits that API 5 introduces.
+4. When generating code for a specific API tier, always include a remark explaining **why this tier does it this way** and **what higher/lower tiers do differently**.
+5. Do not add trivial comments (e.g., `// increment counter` above `counter++`).
+
+---
+
+## Naming Conventions
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Projects | `Api{N}.{Layer}` | `Api1.Domain`, `Api3.Infrastructure` |
+| Namespaces | Mirror folder path | `Api1.Domain.Entities` |
+| Interfaces | `I` prefix | `IColumnRepository`, `IUnitOfWork` |
+| DTOs (requests) | `{Action}{Entity}Request` | `CreateColumnRequest` |
+| DTOs (responses) | `{Entity}Response` | `ColumnResponse` |
+| Commands (API 5) | `{Verb}{Noun}Command` | `CastVoteCommand` |
+| Queries (API 5) | `Get{Noun}Query` | `GetRetroBoardQuery` |
+| Handlers (API 5) | `{CommandOrQuery}Handler` | `CastVoteCommandHandler` |
+| Validators | `{RequestOrCommand}Validator` | `CreateColumnRequestValidator` |
+| EF Configs | `{Entity}Configuration` | `ColumnConfiguration` |
+| Tests | `{Behavior}_When{Condition}_{ExpectedResult}` or descriptive | `AddColumn_WithDuplicateName_ReturnsConflict` |
+
+---
+
+## Testing Rules
+
+1. **Integration tests only** (no unit tests in this repo unless specifically requested).
+2. Shared test base classes live in `RetroBoard.IntegrationTests.Shared/Tests/`.
+3. API-specific test projects inherit from the shared base classes and only provide fixture wiring.
+4. Use **Testcontainers** for PostgreSQL — never depend on a running database outside of Docker.
+5. Use **Respawn** to reset DB state between tests — never recreate the database.
+6. Use **FluentAssertions** for all assertions (`.Should().Be()`, not `Assert.Equal()`).
+7. Tests must be independent and parallelizable. Each test resets the database in its `InitializeAsync`.
+
+---
+
+## EF Core and Database Rules
+
+1. Use **PostgreSQL** with `Npgsql.EntityFrameworkCore.PostgreSQL`.
+2. Use **code-first migrations**. Migration files are committed to the repository.
+3. Use **`DateTime.UtcNow`** for all timestamps. Never use local time.
+4. Soft delete via `DeletedAt` timestamp — handled by `AuditInterceptor` (which converts `EntityState.Deleted` → `EntityState.Modified` with `DeletedAt` set).
+5. Never call `SaveChanges` from a repository. Only the `UnitOfWork` calls `SaveChangesAsync`.
+6. Use `AsNoTracking()` for all read-only queries (especially in API 5 query handlers).
+
+---
+
+## Dependency Injection Rules
+
+1. Register repositories and services as `Scoped`.
+2. Register interceptors as `Singleton`.
+3. Register pipeline behaviors (API 5) as `Transient`.
+4. Use `builder.Services.AddDbContext<T>()` with the interceptor chain.
+5. Central package versions are managed in `Directory.Packages.props` — do not add `Version` attributes in `.csproj` files.
+
+---
+
+## Error Handling Rules
+
+1. Domain exceptions → 409 Conflict or 422 Unprocessable Entity.
+2. `NotFoundException` → 404 Not Found.
+3. Validation failures → 400 Bad Request.
+4. `DbUpdateConcurrencyException` → 409 Conflict (API 3+).
+5. All error responses use Problem Details format.
+
+---
+
+## Things to Avoid
+
+- ❌ Do not use AutoMapper. Use manual mapping to keep transformations explicit and educational.
+- ❌ Do not use `dynamic` or `object` where a specific type is available.
+- ❌ Do not add NuGet packages not listed in `Directory.Packages.props` without discussing it first.
+- ❌ Do not use `#region` blocks.
+- ❌ Do not use `string.Format()` — prefer string interpolation (`$"..."`).
+- ❌ Do not catch `Exception` broadly. Catch specific exception types.
+- ❌ Do not use `Thread.Sleep()` or any synchronous blocking call.
+- ❌ Do not generate code that "works but we'll fix later" — every generated snippet should be production-quality for its tier.
+
+---
+
+## Tier-Specific Reminders
+
+When generating code, check which API tier you are working in:
+
+- **API 1:** Entities are anemic (public setters, no methods). Business logic is in services. This is intentional — do not "improve" it.
+- **API 2:** Entities are rich (private setters, methods). Services are thin orchestrators. Some cross-entity checks still live in services — this is intentional.
+- **API 3:** Aggregates exist. There are only aggregate-level repositories. No per-entity repositories.
+- **API 4:** Vote is its own aggregate. Cross-aggregate checks use DB constraints as safety nets.
+- **API 5:** No services — only MediatR command/query handlers. Query handlers bypass repositories and use DbContext directly (CQRS).

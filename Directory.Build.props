@@ -1,0 +1,30 @@
+<Project>
+
+  <!-- ================================================================
+       Central build properties shared by ALL projects in the solution.
+       This avoids repeating TargetFramework, nullable, etc. in every .csproj.
+       See: https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-by-directory
+       ================================================================ -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- XML documentation comments — generated but do not warn on missing -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Deterministic builds for reproducibility -->
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- ================================================================
+       Central Package Versions — keep all NuGet versions in one place.
+       Every .csproj uses <PackageReference Include="X" /> without Version;
+       the version is resolved here via Directory.Packages.props.
+       ================================================================ -->
+
+</Project>

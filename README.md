@@ -74,14 +74,16 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 - **Concurrency:** Optimistic locking per aggregate; DB unique constraints as safety nets
 - **Key lesson:** Smaller aggregates improve write scalability but introduce the need for cross-aggregate invariant enforcement and eventual consistency trade-offs.
 
-### API 5 — Behavior-Centric + MediatR
-> *"Stop thinking in nouns. Think in behaviors."*
+### API 5 — Behavior-Centric + CQRS + MediatR
+> *"Stop thinking in nouns. Think in behaviors. Separate reads from writes."*
 
-- **Pattern:** Commands, Queries, and Domain Events via **MediatR**
+- **Pattern:** Commands, Queries, and Domain Events via **MediatR**; **CQRS** separates read and write paths
 - **Business logic lives in:** Command handlers + aggregate roots
+- **Reads:** Query handlers project directly from the database (no aggregate loading, no change tracking)
+- **Writes:** Command handlers load aggregates through repositories, enforce invariants, and persist via UoW
 - **Cross-cutting concerns:** Pipeline behaviors (validation, logging, transactions)
 - **Domain Events:** Aggregates raise events; handlers react (decoupled side effects)
-- **Key lesson:** Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve.
+- **Key lesson:** CQRS eliminates the waste of loading full aggregates for read-only requests. Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve. This is "CQRS lite" — same database, separated code paths.
 
 ---
 
@@ -94,6 +96,7 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 | Consistency boundary | ❌ None | ❌ None | ✅ Aggregate | ✅ Aggregate | ✅ Aggregate |
 | Optimistic concurrency | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Write contention risk | N/A | N/A | ⚠️ High | ✅ Low | ✅ Low |
+| CQRS (read/write split) | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Mediator pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Domain events | ❌ | ❌ | ❌ | ❌ | ✅ |
 
