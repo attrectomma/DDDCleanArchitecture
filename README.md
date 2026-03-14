@@ -136,6 +136,15 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 
 ```
 ├── docs/                          # Implementation plans and design decision docs
+│   ├── DesignDecisions.md         # Cross-API design decisions comparison
+│   └── 01–05 per-API plans        # Detailed plans for each API tier
+├── docfx/                         # DocFX documentation site (deployed to GitHub Pages)
+│   ├── concepts/                  # Core concept explanations
+│   ├── migration/                 # Per-API tier migration guides
+│   ├── architecture/              # Layer descriptions and dependency rules
+│   ├── patterns/                  # Design pattern explanations
+│   ├── testing/                   # Test strategy documentation
+│   └── api/                       # Auto-generated API reference
 ├── src/
 │   ├── Api1.AnemicCrud/           # API 1 — Anemic CRUD
 │   ├── Api2.RichDomain/           # API 2 — Rich Domain Models
@@ -149,6 +158,7 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 │   ├── Api3.IntegrationTests/
 │   ├── Api4.IntegrationTests/
 │   └── Api5.IntegrationTests/
+├── .github/workflows/docs.yml     # GitHub Actions: build & deploy DocFX to Pages
 ├── docker-compose.yml
 └── RetroBoard.sln
 ```
@@ -180,10 +190,16 @@ dotnet test
 
 ## 📖 Documentation
 
-Each API tier has a detailed implementation plan in the `docs/` folder explaining:
-- What design decisions were made and **why**
-- What problems the tier solves compared to the previous one
-- What **trade-offs** and new problems it introduces
+**📘 [View the full documentation site →](https://attrectomma.github.io/DDDCleanArchitecture/)**
+
+The DocFX-powered documentation site includes:
+- **[Core Concepts](https://attrectomma.github.io/DDDCleanArchitecture/concepts/)** — Entities, aggregates, repositories, DTOs, and more
+- **[Migration Path](https://attrectomma.github.io/DDDCleanArchitecture/migration/)** — Walk through each API tier and understand what changes and why
+- **[Architecture](https://attrectomma.github.io/DDDCleanArchitecture/architecture/)** — Clean Architecture layers, dependency rules, project structure
+- **[Design Patterns](https://attrectomma.github.io/DDDCleanArchitecture/patterns/)** — Repository, Unit of Work, CQRS, Mediator, Domain Events, Interceptors
+- **[Testing Strategy](https://attrectomma.github.io/DDDCleanArchitecture/testing/)** — Integration tests, Testcontainers, Respawn, shared test infrastructure
+- **[API Reference](https://attrectomma.github.io/DDDCleanArchitecture/api/)** — Auto-generated from XML doc comments in the source code
+- **[Design Decisions](docs/DesignDecisions.md)** — Cross-API comparison of all key architectural decisions
 
 Code is heavily commented using .NET XML doc comments and `// DESIGN:` annotations that reference cross-tier comparisons.
 

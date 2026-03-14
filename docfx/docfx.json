@@ -1,9 +1,25 @@
 {
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [ "src/**/*.csproj" ],
+          "exclude": [ "**/bin/**", "**/obj/**" ],
+          "src": ".."
+        }
+      ],
+      "dest": "api",
+      "properties": {
+        "TargetFramework": "net8.0"
+      },
+      "filter": "filterConfig.yml"
+    }
+  ],
   "build": {
     "content": [
       {
         "files": [ "**/*.{md,yml}" ],
-        "exclude": [ "_site/**", "obj/**", "api/**" ]
+        "exclude": [ "_site/**", "obj/**" ]
       }
     ],
     "resource": [

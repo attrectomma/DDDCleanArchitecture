@@ -1,0 +1,20 @@
+# ──────────────────────────────────────────────────────────────────
+# DocFX API filter configuration.
+# Controls which types and members appear in the generated API reference.
+# See: https://dotnet.github.io/docfx/docs/dotnet-api-docs.html#filter-apis
+# ──────────────────────────────────────────────────────────────────
+
+apiRules:
+  # Exclude EF Core migration classes (auto-generated, not educational)
+  - exclude:
+      uidRegex: ^.*\.Migrations\..*$
+
+  # Exclude Program class (entry point, not interesting for API reference)
+  - exclude:
+      uidRegex: ^.*\.Program$
+
+  # Include everything else that is public
+  - include:
+      hasAttribute:
+        uid: System.Runtime.CompilerServices.CompilerGeneratedAttribute
+      exclude: true

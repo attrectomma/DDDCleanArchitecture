@@ -8,4 +8,23 @@ XML documentation comments.
 > `<returns>`, and `<remarks>` XML doc comments in the source code.
 > Every public type and member in the repository is documented.
 
+## Namespaces by API Tier
+
+| API Tier | Root Namespace | Key Types |
+|----------|---------------|-----------|
+| API 1 — Anemic CRUD | `Api1.Domain`, `Api1.Application`, `Api1.Infrastructure`, `Api1.WebApi` | Anemic entities, per-entity services and repositories |
+| API 2 — Rich Domain | `Api2.Domain`, `Api2.Application`, `Api2.Infrastructure`, `Api2.WebApi` | Rich entities with behavior methods, thin services |
+| API 3 — Aggregates | `Api3.Domain`, `Api3.Application`, `Api3.Infrastructure`, `Api3.WebApi` | Aggregate roots, per-aggregate repositories, `IAggregateRoot` |
+| API 4 — Split Aggregates | `Api4.Domain`, `Api4.Application`, `Api4.Infrastructure`, `Api4.WebApi` | Vote as separate aggregate, cross-aggregate DB constraints |
+| API 5 — CQRS + MediatR | `Api5.Domain`, `Api5.Application`, `Api5.Infrastructure`, `Api5.WebApi` | Commands, queries, handlers, pipeline behaviors, domain events |
+
+## Cross-Cutting Types
+
+These types appear across multiple (or all) API tiers:
+
+- **`AuditableEntityBase`** — Base class for all entities with `Id`, `CreatedAt`, `LastUpdatedAt`, `DeletedAt`.
+- **`IUnitOfWork`** — Transaction boundary abstraction.
+- **`AuditInterceptor`** — EF Core interceptor for audit timestamps and soft delete.
+- **`GlobalExceptionHandlerMiddleware`** — Maps domain exceptions to Problem Details (RFC 7807).
+
 Browse the namespaces below to explore the code documentation for each API tier.

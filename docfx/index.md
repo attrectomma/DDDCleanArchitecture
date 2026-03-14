@@ -35,6 +35,11 @@ sophisticated architecture:
 - **[Architecture](architecture/index.md)** — Clean Architecture layers, dependency rules, and project structure
 - **[Patterns](patterns/index.md)** — Design patterns used in this repository (Unit of Work, Repository, CQRS, Mediator)
 - **[Testing](testing/index.md)** — Integration test strategy, Testcontainers, Respawn, shared test infrastructure
+- **[API Reference](api/index.md)** — Auto-generated documentation from XML doc comments in the source code
+
+> [!TIP]
+> Read the [Design Decisions](https://github.com/attrectomma/DDDCleanArchitecture/blob/master/docs/DesignDecisions.md)
+> document for a cross-API comparison of all key architectural trade-offs.
 
 ## Getting Started
 
