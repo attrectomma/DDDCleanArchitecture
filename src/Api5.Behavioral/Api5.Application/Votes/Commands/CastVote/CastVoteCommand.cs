@@ -1,5 +1,5 @@
+using Api5.Application.Common.Interfaces;
 using Api5.Application.DTOs.Responses;
-using MediatR;
 
 namespace Api5.Application.Votes.Commands.CastVote;
 
@@ -12,7 +12,12 @@ namespace Api5.Application.Votes.Commands.CastVote;
 /// shift from noun-centric (VoteService.CastVote) to behavior-centric
 /// (CastVoteCommand). The command name reads as a sentence:
 /// "Cast a vote on note X by user Y."
+///
+/// Implements <see cref="ICommand{TResponse}"/> (not <c>IRequest</c>
+/// directly) so the <c>TransactionBehavior</c> wraps this command's
+/// execution — including any domain event handlers — in a single
+/// atomic database transaction.
 /// </remarks>
 /// <param name="NoteId">The ID of the note to vote on.</param>
 /// <param name="UserId">The ID of the user casting the vote.</param>
-public record CastVoteCommand(Guid NoteId, Guid UserId) : IRequest<VoteResponse>;
+public record CastVoteCommand(Guid NoteId, Guid UserId) : ICommand<VoteResponse>;

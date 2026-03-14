@@ -82,9 +82,10 @@ This is an **educational repository**. Comments are critical.
 | Interfaces | `I` prefix | `IColumnRepository`, `IUnitOfWork` |
 | DTOs (requests) | `{Action}{Entity}Request` | `CreateColumnRequest` |
 | DTOs (responses) | `{Entity}Response` | `ColumnResponse` |
-| Commands (API 5) | `{Verb}{Noun}Command` | `CastVoteCommand` |
-| Queries (API 5) | `Get{Noun}Query` | `GetRetroBoardQuery` |
+| Commands (API 5) | `{Verb}{Noun}Command` : `ICommand<TResponse>` | `CastVoteCommand` |
+| Queries (API 5) | `Get{Noun}Query` : `IRequest<TResponse>` | `GetRetroBoardQuery` |
 | Handlers (API 5) | `{CommandOrQuery}Handler` | `CastVoteCommandHandler` |
+| Behaviors (API 5) | `{Concern}Behavior` | `TransactionBehavior`, `ValidationBehavior` |
 | Validators | `{RequestOrCommand}Validator` | `CreateColumnRequestValidator` |
 | EF Configs | `{Entity}Configuration` | `ColumnConfiguration` |
 | Tests | `{Behavior}_When{Condition}_{ExpectedResult}` or descriptive | `AddColumn_WithDuplicateName_ReturnsConflict` |

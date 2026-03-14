@@ -1,5 +1,5 @@
+using Api5.Application.Common.Interfaces;
 using Api5.Application.DTOs.Responses;
-using MediatR;
 
 namespace Api5.Application.Users.Commands.CreateUser;
 
@@ -18,4 +18,4 @@ namespace Api5.Application.Users.Commands.CreateUser;
 /// </remarks>
 /// <param name="Name">The display name of the user.</param>
 /// <param name="Email">The email address of the user.</param>
-public record CreateUserCommand(string Name, string Email) : IRequest<UserResponse>;
+public record CreateUserCommand(string Name, string Email) : ICommand<UserResponse>;

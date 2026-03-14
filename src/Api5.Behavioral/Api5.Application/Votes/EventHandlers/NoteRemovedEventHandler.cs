@@ -23,10 +23,15 @@ namespace Api5.Application.Votes.EventHandlers;
 /// implementations without modifying the RetroBoard aggregate or the
 /// RemoveNote command handler.
 ///
-/// NOTE: This handler runs within the same transaction as the command
-/// that triggered the event (thanks to the DomainEventInterceptor
-/// dispatching after save but within the transaction boundary). If this
-/// handler fails, the entire transaction rolls back.
+/// TRANSACTIONAL SAFETY: This handler runs within the same database
+/// transaction as the command that triggered the event. The
+/// <c>TransactionBehavior</c> pipeline behavior opens an explicit
+/// transaction before the command handler runs. The
+/// <c>DomainEventInterceptor</c> dispatches events after
+/// <c>SaveChangesAsync</c>, but the explicit transaction is still open.
+/// When this handler calls <c>SaveChangesAsync</c> to delete votes, those
+/// changes participate in the same transaction. If this handler fails,
+/// the entire transaction rolls back — including the original note deletion.
 /// </remarks>
 public class NoteRemovedEventHandler : INotificationHandler<NoteRemovedEvent>
 {

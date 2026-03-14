@@ -73,6 +73,25 @@ public class ValidationBehavior<TRequest, TResponse>
 }
 ```
 
+### Selective Activation via `ICommand<T>`
+
+Not all behaviors should run for all requests. The `TransactionBehavior` uses
+a generic constraint to activate **only for commands**:
+
+```csharp
+// Only runs for types implementing ICommand<T>
+public class TransactionBehavior<TRequest, TResponse>
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : ICommand<TResponse>  // ← queries skip this entirely
+```
+
+Commands implement `ICommand<T>` (which extends `IRequest<T>`); queries
+implement `IRequest<T>` directly. This makes the CQRS read/write split
+visible at the type system level — not just by naming convention.
+
+For the full transaction story, see
+[Transaction Behavior](transaction-behavior.md).
+
 ## Benefits
 
 - **Single Responsibility** — Each handler does one thing.

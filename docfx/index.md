@@ -33,7 +33,7 @@ sophisticated architecture:
 - **[Core Concepts](concepts/index.md)** — Learn the building blocks (entities, repositories, services, DTOs, aggregates, etc.)
 - **[Migration Path](migration/index.md)** — Walk through each API tier and understand what changes and why
 - **[Architecture](architecture/index.md)** — Clean Architecture layers, dependency rules, and project structure
-- **[Patterns](patterns/index.md)** — Design patterns used in this repository (Unit of Work, Repository, CQRS, Mediator, Strategy, Specification, Options)
+- **[Patterns](patterns/index.md)** — Design patterns used in this repository (Unit of Work, Repository, CQRS, Mediator, Transaction Behavior, Strategy, Specification, Options)
 - **[Testing](testing/index.md)** — Integration test strategy, Testcontainers, Respawn, shared test infrastructure
 - **[API Reference](api/index.md)** — Auto-generated documentation from XML doc comments in the source code
 

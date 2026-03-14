@@ -23,7 +23,8 @@ using Microsoft.Extensions.Options;
 // DESIGN: Key differences from API 4:
 //   - NO service registrations (no IUserService, IProjectService, etc.)
 //   - MediatR discovers command/query handlers by convention
-//   - Pipeline behaviors (Logging, Validation) run for every request
+//   - Pipeline behaviors (Logging, Validation, Transaction) run for every
+//     command; queries skip TransactionBehavior via ICommand<T> marker
 //   - FluentValidation validators are on Commands, not Request DTOs
 //   - DomainEventInterceptor dispatches domain events after SaveChanges
 //   - IReadOnlyDbContext registered for CQRS query handlers
@@ -81,6 +82,13 @@ builder.Services.AddDbContext<RetroBoardDbContext>((serviceProvider, options) =>
 // repositories. The concrete RetroBoardDbContext implements this interface.
 
 builder.Services.AddScoped<IReadOnlyDbContext>(sp =>
+    sp.GetRequiredService<RetroBoardDbContext>());
+
+// DESIGN: Register the DbContext also as its base class so the
+// TransactionBehavior (in the Application layer) can inject DbContext
+// without referencing the concrete RetroBoardDbContext — keeping the
+// Application layer free of Infrastructure concerns.
+builder.Services.AddScoped<DbContext>(sp =>
     sp.GetRequiredService<RetroBoardDbContext>());
 
 // ── Repositories (Scoped) ───────────────────────────────────────

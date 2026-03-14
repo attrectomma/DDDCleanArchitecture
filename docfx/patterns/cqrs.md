@@ -28,6 +28,36 @@ For reads, we're paying the cost of:
 
 ## How API 5 Implements CQRS
 
+### Type-Level Separation: `ICommand<T>` vs `IRequest<T>`
+
+The read/write split is enforced at the type system level using a marker
+interface:
+
+```csharp
+// ICommand<T> extends IRequest<T> — commands ARE requests,
+// but with a marker that pipeline behaviors can detect.
+public interface ICommand<out TResponse> : IRequest<TResponse>;
+```
+
+Commands implement `ICommand<T>`:
+
+```csharp
+public record AddColumnCommand(Guid RetroBoardId, string Name)
+    : ICommand<ColumnResponse>;
+```
+
+Queries implement `IRequest<T>` directly:
+
+```csharp
+public record GetRetroBoardQuery(Guid RetroBoardId)
+    : IRequest<RetroBoardResponse>;
+```
+
+This distinction enables the [TransactionBehavior](transaction-behavior.md)
+to wrap only commands in a database transaction — queries skip it entirely.
+Without this marker, the pipeline would need naming conventions or folder
+structure to distinguish commands from queries — a fragile approach.
+
 ### Write Side (Commands)
 
 Commands flow through aggregate roots — same as API 4:

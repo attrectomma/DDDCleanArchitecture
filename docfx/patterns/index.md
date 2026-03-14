@@ -10,6 +10,7 @@ how they work, and which API tiers use them.
 - [CQRS — Command Query Responsibility Segregation](cqrs.md)
 - [Mediator Pattern](mediator.md)
 - [Domain Events](domain-events.md)
+- [Transaction Behavior](transaction-behavior.md)
 - [Interceptor Pattern](interceptors.md)
 - [Specification Pattern](specification-pattern.md)
 - [Strategy Pattern](strategy-pattern.md)

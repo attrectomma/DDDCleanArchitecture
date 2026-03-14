@@ -1,6 +1,6 @@
+using Api5.Application.Common.Interfaces;
 using Api5.Application.DTOs.Responses;
 using Api5.Domain.VoteAggregate.Strategies;
-using MediatR;
 
 namespace Api5.Application.Retros.Commands.ChangeVotingStrategy;
 
@@ -17,4 +17,4 @@ namespace Api5.Application.Retros.Commands.ChangeVotingStrategy;
 /// <param name="VotingStrategyType">The new voting strategy type.</param>
 public record ChangeVotingStrategyCommand(
     Guid RetroBoardId,
-    VotingStrategyType VotingStrategyType) : IRequest<RetroBoardResponse>;
+    VotingStrategyType VotingStrategyType) : ICommand<RetroBoardResponse>;

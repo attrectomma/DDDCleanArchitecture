@@ -10,6 +10,8 @@
   href: mediator.md
 - name: Domain Events
   href: domain-events.md
+- name: Transaction Behavior
+  href: transaction-behavior.md
 - name: Interceptor Pattern
   href: interceptors.md
 - name: Specification Pattern

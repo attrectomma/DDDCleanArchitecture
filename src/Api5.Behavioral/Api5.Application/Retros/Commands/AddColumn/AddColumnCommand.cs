@@ -1,5 +1,5 @@
+using Api5.Application.Common.Interfaces;
 using Api5.Application.DTOs.Responses;
-using MediatR;
 
 namespace Api5.Application.Retros.Commands.AddColumn;
 
@@ -13,4 +13,4 @@ namespace Api5.Application.Retros.Commands.AddColumn;
 /// </remarks>
 /// <param name="RetroBoardId">The ID of the retro board.</param>
 /// <param name="Name">The name of the new column.</param>
-public record AddColumnCommand(Guid RetroBoardId, string Name) : IRequest<ColumnResponse>;
+public record AddColumnCommand(Guid RetroBoardId, string Name) : ICommand<ColumnResponse>;

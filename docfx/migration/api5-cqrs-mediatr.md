@@ -18,6 +18,7 @@
 | Voting rules | Hardcoded one-vote-per-note | **Configurable via Strategy + Specification** |
 | Vote uniqueness | DB unique constraint | **Conditional — DB unique index (Default) or app-level only (Budget)** |
 | Configuration | Hardcoded constants | **Options pattern (`IOptions<VotingOptions>`) + startup validation** |
+| Transaction scope | Single `SaveChangesAsync` | **Explicit per-command via `TransactionBehavior` pipeline** |
 
 ## CQRS — The Core Idea
 
@@ -75,9 +76,19 @@ Controller → IMediator.Send()
                 ├─ LoggingBehavior       (logs request/response)
                 ├─ ValidationBehavior    (runs FluentValidation)
                 ├─ TransactionBehavior   (wraps commands in DB transaction)
-                │
+                │                         ↑ only for ICommand<T>, skipped for queries
                 └─ Handler               (actual business logic)
 ```
+
+The `TransactionBehavior` uses a generic constraint
+(`where TRequest : ICommand<TResponse>`) to activate **only for commands**.
+Queries implement `IRequest<T>` directly and bypass the transaction entirely.
+
+The `TransactionBehavior` ensures the handler and all domain event handlers
+it triggers run inside a single explicit database transaction. If any event
+handler fails, the entire operation rolls back — including the original
+command’s changes. See [Transaction Behavior](../patterns/transaction-behavior.md)
+for the full explanation of how this coexists with the Unit of Work.
 
 Adding a new cross-cutting concern (e.g., authorization) means adding one
 pipeline behavior — not modifying every service method.
@@ -246,6 +257,7 @@ For the full deep-dive, see [Options Pattern](../patterns/options-pattern.md).
 | **Learning curve** | MediatR, pipeline behaviors, CQRS, domain events, Options pattern |
 | **"CQRS lite"** | Same database for reads and writes (no read replica) |
 | **Config-dependent schema** | Conditional unique index requires custom `IModelCacheKeyFactory` |
+| **Longer transactions** | `TransactionBehavior` holds an explicit transaction for the full command lifecycle |
 
 ## When to Use This Level of Architecture
 

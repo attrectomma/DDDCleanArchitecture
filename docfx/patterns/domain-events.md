@@ -53,8 +53,9 @@ public class NoteRemovedEventHandler : INotificationHandler<NoteRemovedEvent>
 
 ## Dispatching Events
 
-Events are dispatched by an EF Core interceptor **after `SaveChanges`** but
-**within the same transaction**:
+Events are dispatched by an EF Core interceptor **after `SaveChanges`**
+succeeds, but **within the explicit transaction** opened by the
+[TransactionBehavior](transaction-behavior.md):
 
 ```csharp
 public class DomainEventInterceptor : SaveChangesInterceptor
@@ -71,6 +72,23 @@ public class DomainEventInterceptor : SaveChangesInterceptor
             await _publisher.Publish(domainEvent, ct);
     }
 }
+```
+
+### Transactional Safety
+
+The `TransactionBehavior` opens an explicit transaction before the command
+handler runs. When the interceptor dispatches events after `SaveChangesAsync`,
+the transaction is still open. Event handlers that call `SaveChangesAsync`
+(e.g., `NoteRemovedEventHandler` deleting orphaned votes) participate in the
+**same transaction**. If any event handler fails, the entire operation —
+including the original command — rolls back.
+
+```
+TransactionBehavior.BeginTransaction()
+  ├─ Handler: SaveChangesAsync() → flushes, does NOT commit
+  │    └─ Interceptor dispatches NoteRemovedEvent
+  │         └─ EventHandler: SaveChangesAsync() → flushes, does NOT commit
+  └─ TransactionBehavior.CommitAsync() → atomic commit of everything
 ```
 
 ## Used In

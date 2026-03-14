@@ -11,6 +11,13 @@ namespace Api5.Infrastructure.Persistence;
 /// at the end of their operation. Domain event handlers triggered by the
 /// <see cref="Interceptors.DomainEventInterceptor"/> may also call
 /// SaveChanges to persist their side effects (e.g., vote cleanup).
+///
+/// The <c>TransactionBehavior</c> opens an explicit transaction before
+/// the handler runs. Multiple <c>SaveChangesAsync</c> calls (from the
+/// handler and from domain event handlers) all participate in that
+/// single transaction. The UnitOfWork is unaware of the transaction —
+/// it simply flushes changes. The pipeline behavior owns the
+/// commit/rollback.
 /// </remarks>
 public class UnitOfWork : IUnitOfWork
 {

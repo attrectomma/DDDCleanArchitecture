@@ -1,6 +1,6 @@
+using Api5.Application.Common.Interfaces;
 using Api5.Application.DTOs.Responses;
 using Api5.Domain.VoteAggregate.Strategies;
-using MediatR;
 
 namespace Api5.Application.Retros.Commands.CreateRetroBoard;
 
@@ -22,4 +22,4 @@ namespace Api5.Application.Retros.Commands.CreateRetroBoard;
 public record CreateRetroBoardCommand(
     Guid ProjectId,
     string Name,
-    VotingStrategyType? VotingStrategyType = null) : IRequest<RetroBoardResponse>;
+    VotingStrategyType? VotingStrategyType = null) : ICommand<RetroBoardResponse>;

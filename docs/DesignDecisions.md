@@ -213,7 +213,9 @@ Each handler is a small, focused class that does one thing:
   handler, not modifying an existing service.
 - **Pipeline behaviors** — Cross-cutting concerns (validation, logging,
   transactions) are applied automatically via MediatR's pipeline, not
-  duplicated in every method.
+  duplicated in every method. The `TransactionBehavior` selectively wraps
+  only commands (via `ICommand<T>` marker) in explicit DB transactions;
+  queries skip it entirely.
 
 ### Trade-off
 
