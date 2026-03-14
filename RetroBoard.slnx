@@ -37,5 +37,9 @@
     <Project Path="tests/Api5.IntegrationTests/Api5.IntegrationTests.csproj" />
     <Project Path="tests/RetroBoard.IntegrationTests.Shared/RetroBoard.IntegrationTests.Shared.csproj" />
     <Project Path="tests/Api1.IntegrationTests/Api1.IntegrationTests.csproj" />
+    <Project Path="tests/Api2.Domain.UnitTests/Api2.Domain.UnitTests.csproj" />
+    <Project Path="tests/Api3.Domain.UnitTests/Api3.Domain.UnitTests.csproj" />
+    <Project Path="tests/Api4.Domain.UnitTests/Api4.Domain.UnitTests.csproj" />
+    <Project Path="tests/Api5.Domain.UnitTests/Api5.Domain.UnitTests.csproj" />
   </Folder>
 </Solution>

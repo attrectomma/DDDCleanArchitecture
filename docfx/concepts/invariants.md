@@ -24,6 +24,17 @@ In the RetroBoard domain, the invariants are:
 | API 4 | Entity methods | Aggregate root | **Service + DB constraints** |
 | API 5 | Entity methods | Aggregate root | **Command handler + DB constraints** |
 
+## Unit Testing Invariants
+
+Starting from API 2, invariants enforced inside entities and aggregate roots
+are **directly unit testable** — no mocking, no database, no HTTP. Each test
+constructs an entity or aggregate in-memory, calls the method under test,
+and asserts the outcome. This is a key advantage of rich domain models and
+aggregate design over anemic service-layer enforcement (API 1).
+
+See [Domain Unit Tests](../testing/unit-tests.md) for the full test
+inventory across tiers.
+
 ## Domain Exceptions
 
 When an invariant is violated, the domain throws a domain-specific exception:

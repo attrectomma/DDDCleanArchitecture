@@ -339,6 +339,119 @@ teaching goal: **showing how domain modeling and architecture evolve together.**
 
 ---
 
+## 12. Testing Strategy: Unit Tests + Integration Tests, No Mocking
+
+### Decision
+
+The repository uses **two complementary test layers** — and deliberately
+excludes mock-based testing:
+
+| Layer | Scope | Infrastructure | Tiers |
+|-------|-------|---------------|-------|
+| **Domain unit tests** | Entity/aggregate methods | None — pure in-memory | API 2–5 |
+| **Integration tests** | HTTP → Controller → Service/Handler → DB | Testcontainers (PostgreSQL), WebApplicationFactory | API 1–5 |
+| ~~Mock-based unit tests~~ | ~~Service/handler orchestration~~ | ~~Moq / NSubstitute~~ | ❌ Not used |
+
+### Why No Mocking?
+
+#### 1. The handlers and services are thin orchestrators
+
+The typical application-layer method in this codebase follows a linear pattern:
+
+```csharp
+// API 5 — AddColumnCommandHandler.Handle
+RetroBoard retro = await _repository.GetByIdAsync(id, ct)
+    ?? throw new NotFoundException("RetroBoard", id);
+
+Column column = retro.AddColumn(request.Name);      // ← Domain logic
+await _unitOfWork.SaveChangesAsync(ct);              // ← Persistence
+return new ColumnResponse(column.Id, column.Name);   // ← Mapping
+```
+
+A mock-based test for this handler would verify: "did you call
+`GetByIdAsync`? did you call `SaveChangesAsync`?" — that is **testing
+implementation details, not behavior**. If the handler is refactored to use a
+different repository method, the mock test breaks even though the observable
+behavior is unchanged. This is the classic brittle-mock anti-pattern.
+
+#### 2. The real logic is already unit tested
+
+The invariant check inside `retro.AddColumn(request.Name)` — the part that
+can actually fail in interesting ways — is exercised by the domain unit tests.
+Mocking the repository to test that `AddColumn` was called does not add
+confidence beyond what the domain unit test already provides.
+
+#### 3. Orchestration is covered by integration tests
+
+The integration tests verify the full path: HTTP request → controller →
+handler → repository → database → response. They catch:
+
+- Wiring mistakes (wrong DI registration, missing Include, wrong mapping)
+- Database behavior (constraint violations, query filter interactions)
+- Middleware behavior (exception-to-ProblemDetails mapping)
+
+Mock-based tests would catch **none of these** because they replace the
+real collaborators with fakes.
+
+#### 4. Query handlers should not be mock-tested
+
+API 5's query handlers project directly from `DbContext` using LINQ-to-SQL
+with `.Select()`, `AsNoTracking()`, and correlated subqueries. Mocking
+`DbContext`/`DbSet` is a well-known anti-pattern — the mocked behavior
+diverges from real EF Core query translation. The EF Core team themselves
+recommend testing queries against a real database.
+
+#### 5. The premise "only API 5 would benefit" does not hold
+
+The logic in `Api5.CastVoteCommandHandler` is **nearly line-for-line
+identical** to `Api4.VoteService.CastVoteAsync` — same dependencies
+(vote repo, retro repo, project repo, UoW), same cross-aggregate checks,
+same orchestration flow. If mocking handlers is worthwhile for API 5, it is
+equally worthwhile for API 2–4 services. MediatR dispatch does not make
+handler code inherently more "mock-worthy" than service code.
+
+#### 6. Educational risk
+
+In a teaching repository, introducing mocks risks sending the wrong message:
+"you should mock everything." The current strategy teaches a cleaner
+principle: **design your domain so the interesting logic lives in pure
+functions that need no mocks, and verify the wiring with end-to-end tests.**
+
+### When Mocking IS Justified (Outside This Repo)
+
+Mocking becomes valuable when application-layer orchestration has:
+
+- **Significant branching logic** — multiple code paths with different
+  outcomes (e.g., saga-style workflows, conditional retry policies).
+- **External service calls** — HTTP clients, message queues, file systems
+  that are slow, non-deterministic, or unavailable in test environments.
+- **Complex coordination** — multi-aggregate transactions where the order
+  of operations matters and must be verified.
+
+This repository's handlers do not exhibit these characteristics. Most are
+linear load → delegate → save sequences. The two handlers with the most
+orchestration logic (`CastVoteCommandHandler` with 3 cross-aggregate checks,
+and `NoteRemovedEventHandler` with conditional cleanup) are thoroughly
+covered by the integration test suite.
+
+### The Two-Layer Testing Pyramid
+
+```
+┌─────────────────────────────────────────┐
+│       Integration Tests (API 1–5)       │  ← Verify wiring, DB, HTTP
+│   Testcontainers · WebApplicationFactory │
+├─────────────────────────────────────────┤
+│       Domain Unit Tests (API 2–5)       │  ← Verify invariants, guards,
+│   No infra · No mocks · Pure functions  │     domain events, pure logic
+└─────────────────────────────────────────┘
+```
+
+The unit tests are fast and precise. The integration tests are thorough and
+realistic. Together they provide high confidence without the brittleness and
+maintenance cost of a mock-heavy middle layer.
+
+---
+
 ## Summary: When to Use Which Tier
 
 | Scenario | Recommended Tier |

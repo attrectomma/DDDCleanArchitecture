@@ -119,6 +119,34 @@ problem:
 
 These limitations are addressed by [aggregates](aggregates.md) in API 3.
 
+## Testability
+
+One of the strongest benefits of rich domain models: **pure invariant methods
+are unit testable without mocking or infrastructure.**
+
+Every entity method is a pure function — it takes arguments, mutates
+in-memory state, and either returns a result or throws an exception. Tests
+can construct an entity directly, call a method, and assert the outcome.
+No Docker, no database, no HTTP client, no mock objects.
+
+```csharp
+[Fact]
+public void AddNote_WithDuplicateText_ThrowsInvariantViolation()
+{
+    Column column = new Column(Guid.NewGuid(), "What went well");
+    column.AddNote("Great teamwork");
+
+    Action act = () => column.AddNote("Great teamwork");
+
+    act.Should().Throw<InvariantViolationException>();
+}
+```
+
+This is not possible with API 1's anemic entities — they have no methods to
+test. Testability is a direct consequence of moving business logic into
+entities. See [Domain Unit Tests](../testing/unit-tests.md) for the full
+test inventory.
+
 ## Where to Go Next
 
 - [Aggregates & Aggregate Roots](aggregates.md) — How API 3 wraps entities

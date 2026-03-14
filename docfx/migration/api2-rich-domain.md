@@ -54,6 +54,34 @@ await _unitOfWork.SaveChangesAsync(ct);
 - **No concurrency control** — still no optimistic locking.
 - **No consistency boundary** — still no aggregate design.
 
+## Testability
+
+A key advantage of rich domain models over anemic ones: **entity invariants
+are unit testable without any infrastructure.**
+
+Because every entity method is a pure function (takes arguments, mutates
+in-memory state, returns a result or throws), tests can construct an entity
+with `new`, call a method, and assert the outcome. No Docker, no database,
+no HTTP, no mocking.
+
+```csharp
+[Fact]
+public void CastVote_WithDuplicateUser_ThrowsInvariantViolation()
+{
+    Note note = new Note(Guid.NewGuid(), "Great teamwork");
+    Guid userId = Guid.NewGuid();
+    note.CastVote(userId);
+
+    Action act = () => note.CastVote(userId);
+
+    act.Should().Throw<InvariantViolationException>();
+}
+```
+
+API 1's anemic entities have no behavior to test — this is itself a teaching
+point. See [Domain Unit Tests](../testing/unit-tests.md) for the full test
+inventory across tiers.
+
 ## Concurrency Test Results
 
 Same as API 1:

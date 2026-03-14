@@ -1,5 +1,20 @@
 # Test Infrastructure
 
+## Two Layers of Testing
+
+This repository uses a **two-layer testing strategy**:
+
+| Layer | What It Tests | Infrastructure Required | Speed |
+|-------|--------------|------------------------|-------|
+| **Domain unit tests** | Entity constructors, guard clauses, invariant methods, domain events | None — pure in-memory | Milliseconds |
+| **Integration tests** | Full HTTP request → API → PostgreSQL round-trips, concurrency, soft delete | Docker (Testcontainers), WebApplicationFactory, Respawn | Seconds |
+
+Domain unit tests exist for API 2–5 (API 1's anemic entities have no behavior
+to test). They have **zero infrastructure dependencies** — no Docker, no
+database, no HTTP. See [Domain Unit Tests](unit-tests.md) for details.
+
+The rest of this page describes the **integration test** infrastructure.
+
 ## Technology Stack
 
 | Tool | Purpose |

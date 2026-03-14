@@ -104,6 +104,21 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 
 ## 🧪 Testing Strategy
 
+The repository uses a **two-layer testing strategy**:
+
+### Domain Unit Tests (API 2–5)
+
+Rich domain entities and aggregate roots are **unit testable without any infrastructure** — no Docker, no database, no HTTP, no mocking. Each test constructs an entity in-memory, calls a method, and asserts the outcome. API 1 is excluded because its anemic entities have no behavior to test.
+
+| Project | What It Tests | Test Count |
+|---------|--------------|------------|
+| `Api2.Domain.UnitTests` | Entity constructors, guards, invariant methods | ~29 |
+| `Api3.Domain.UnitTests` | Aggregate root operations (column/note/vote through RetroBoard) | ~25 |
+| `Api4.Domain.UnitTests` | Same as API 3, minus vote (Vote is its own aggregate) | ~23 |
+| `Api5.Domain.UnitTests` | Same as API 4, plus domain event assertions | ~29 |
+
+### Integration Tests (All 5 APIs)
+
 All five APIs share the **exact same integration test suite**. Tests run end-to-end: HTTP request → API → PostgreSQL (running in Docker via Testcontainers).
 
 | Test Category | API 1 | API 2 | API 3 | API 4 | API 5 |
@@ -157,7 +172,11 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 │   ├── Api2.IntegrationTests/
 │   ├── Api3.IntegrationTests/
 │   ├── Api4.IntegrationTests/
-│   └── Api5.IntegrationTests/
+│   ├── Api5.IntegrationTests/
+│   ├── Api2.Domain.UnitTests/         # Domain unit tests (API 2–5)
+│   ├── Api3.Domain.UnitTests/
+│   ├── Api4.Domain.UnitTests/
+│   └── Api5.Domain.UnitTests/
 ├── .github/workflows/docs.yml     # GitHub Actions: build & deploy DocFX to Pages
 ├── docker-compose.yml
 └── RetroBoard.sln

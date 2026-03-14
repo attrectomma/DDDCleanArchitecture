@@ -76,7 +76,9 @@ This is an **educational repository**. Comments are critical.
 | Element | Convention | Example |
 |---------|-----------|---------|
 | Projects | `Api{N}.{Layer}` | `Api1.Domain`, `Api3.Infrastructure` |
+| Unit test projects | `Api{N}.Domain.UnitTests` | `Api2.Domain.UnitTests` |
 | Namespaces | Mirror folder path | `Api1.Domain.Entities` |
+| Unit test namespaces | Flat project name | `Api2.Domain.UnitTests` |
 | Interfaces | `I` prefix | `IColumnRepository`, `IUnitOfWork` |
 | DTOs (requests) | `{Action}{Entity}Request` | `CreateColumnRequest` |
 | DTOs (responses) | `{Entity}Response` | `ColumnResponse` |
@@ -91,13 +93,23 @@ This is an **educational repository**. Comments are critical.
 
 ## Testing Rules
 
-1. **Integration tests only** (no unit tests in this repo unless specifically requested).
-2. Shared test base classes live in `RetroBoard.IntegrationTests.Shared/Tests/`.
-3. API-specific test projects inherit from the shared base classes and only provide fixture wiring.
-4. Use **Testcontainers** for PostgreSQL — never depend on a running database outside of Docker.
-5. Use **Respawn** to reset DB state between tests — never recreate the database.
-6. Use **FluentAssertions** for all assertions (`.Should().Be()`, not `Assert.Equal()`).
-7. Tests must be independent and parallelizable. Each test resets the database in its `InitializeAsync`.
+### Integration Tests
+1. Shared test base classes live in `RetroBoard.IntegrationTests.Shared/Tests/`.
+2. API-specific test projects inherit from the shared base classes and only provide fixture wiring.
+3. Use **Testcontainers** for PostgreSQL — never depend on a running database outside of Docker.
+4. Use **Respawn** to reset DB state between tests — never recreate the database.
+5. Use **FluentAssertions** for all assertions (`.Should().Be()`, not `Assert.Equal()`).
+6. Tests must be independent and parallelizable. Each test resets the database in its `InitializeAsync`.
+
+### Domain Unit Tests
+7. Domain unit tests exist for **API 2–5** (API 1's anemic entities have no behavior to test).
+8. Unit test projects are named `Api{N}.Domain.UnitTests` and live in the `tests/` folder.
+9. Unit test namespaces are flat: `Api{N}.Domain.UnitTests` — no sub-namespaces.
+10. Unit tests require **no infrastructure** — no Docker, no database, no HTTP, no mocking frameworks.
+11. Unit tests use **xUnit** (`[Fact]`) and **FluentAssertions**.
+12. Each test class covers one entity or aggregate root: `UserTests`, `ProjectTests`, `RetroBoardTests`, etc.
+13. Test naming follows: `{Method}_{Condition}_{ExpectedResult}` — e.g., `AddColumn_WithDuplicateName_ThrowsInvariantViolation`.
+14. API 5 domain event tests assert the `DomainEvents` collection contains the correct event type and payload.
 
 ---
 
