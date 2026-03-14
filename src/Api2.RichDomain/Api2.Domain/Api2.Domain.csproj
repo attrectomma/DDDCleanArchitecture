@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api2.Domain — Rich domain entities with behaviour.
+       No dependencies on any other project or infrastructure package.
+       Unlike API 1, entities have private setters, factory constructors,
+       and domain methods that enforce invariants. Business logic lives
+       inside the entities, not in the service layer.
+       ================================================================ -->
+
+</Project>

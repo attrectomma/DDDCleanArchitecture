@@ -1,11 +1,19 @@
 <Solution>
+  <Folder Name="/src/" />
   <Folder Name="/src/Api1.AnemicCrud/">
     <Project Path="src/Api1.AnemicCrud/Api1.Domain/Api1.Domain.csproj" />
     <Project Path="src/Api1.AnemicCrud/Api1.Application/Api1.Application.csproj" />
     <Project Path="src/Api1.AnemicCrud/Api1.Infrastructure/Api1.Infrastructure.csproj" />
     <Project Path="src/Api1.AnemicCrud/Api1.WebApi/Api1.WebApi.csproj" />
   </Folder>
+  <Folder Name="/src/Api2.RichDomain/">
+    <Project Path="src/Api2.RichDomain/Api2.Application/Api2.Application.csproj" />
+    <Project Path="src/Api2.RichDomain/Api2.Domain/Api2.Domain.csproj" />
+    <Project Path="src/Api2.RichDomain/Api2.Infrastructure/Api2.Infrastructure.csproj" />
+    <Project Path="src/Api2.RichDomain/Api2.WebApi/Api2.WebApi.csproj" />
+  </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Api2.IntegrationTests/Api2.IntegrationTests.csproj" />
     <Project Path="tests/RetroBoard.IntegrationTests.Shared/RetroBoard.IntegrationTests.Shared.csproj" />
     <Project Path="tests/Api1.IntegrationTests/Api1.IntegrationTests.csproj" />
   </Folder>

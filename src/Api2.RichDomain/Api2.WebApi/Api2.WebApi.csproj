@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api2.WebApi — ASP.NET Core Web API host for the Rich Domain tier.
+       Thin controllers that delegate to application services.
+       Same external contract as API 1.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api2.Application\Api2.Application.csproj" />
+    <ProjectReference Include="..\Api2.Infrastructure\Api2.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

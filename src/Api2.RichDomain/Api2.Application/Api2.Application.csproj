@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api2.Application — Thin orchestration services, DTOs, validators,
+       and repository interfaces. Services delegate invariant enforcement
+       to domain entities where possible (within-entity rules) and handle
+       cross-entity checks via repository queries (cross-entity rules).
+       Depends on Api2.Domain but never on Infrastructure or WebApi.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api2.Domain\Api2.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+</Project>
