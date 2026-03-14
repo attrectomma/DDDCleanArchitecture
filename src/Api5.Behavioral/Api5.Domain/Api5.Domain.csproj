@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api5.Domain — Behavior-centric domain model with CQRS + MediatR.
+       Same four aggregate roots as API 4 (User, Project, RetroBoard, Vote),
+       but enhanced with:
+         - Domain events (IDomainEvent, IHasDomainEvents)
+         - An AggregateRoot base class that collects and exposes events
+         - Aggregates raise events when key state changes occur
+
+       Key difference from API 4: Aggregates are no longer passive data holders
+       that rely on services for side effects. They actively raise domain events
+       to signal that something happened, allowing decoupled event handlers to
+       react (e.g., NoteRemovedEvent → vote cleanup).
+
+       The domain model itself references MediatR only for the INotification
+       marker interface on IDomainEvent. All other MediatR usage is in the
+       Application and Infrastructure layers.
+       ================================================================ -->
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+</Project>

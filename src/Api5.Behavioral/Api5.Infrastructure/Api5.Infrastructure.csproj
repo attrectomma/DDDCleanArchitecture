@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api5.Infrastructure — EF Core DbContext, entity configurations,
+       interceptors, repositories, and Unit of Work implementation.
+       Depends on Api5.Domain and Api5.Application.
+
+       Key differences from API 4:
+         - DbContext implements IReadOnlyDbContext for CQRS query handlers.
+         - New DomainEventInterceptor dispatches domain events after save.
+         - Repositories are unchanged (write-side only in API 5).
+         - Configurations are unchanged from API 4.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api5.Domain\Api5.Domain.csproj" />
+    <ProjectReference Include="..\Api5.Application\Api5.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+</Project>

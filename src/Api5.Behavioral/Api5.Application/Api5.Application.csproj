@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api5.Application — Behavior-centric application layer using CQRS
+       and MediatR. Organized by use-case (feature folders) instead of
+       services.
+
+       Key difference from API 4:
+         - NO service interfaces or implementations.
+         - Commands (write) and Queries (read) replace service methods.
+         - Each use case = Command/Query + Handler + Validator (3 files).
+         - MediatR pipeline behaviors handle cross-cutting concerns
+           (logging, validation, transactions).
+         - Domain event handlers react to aggregate events.
+         - Validators are on Commands, not on Request DTOs (validation
+           is part of the MediatR pipeline, not ASP.NET model binding).
+
+       CQRS:
+         - Command handlers use repositories (write side).
+         - Query handlers use DbContext directly (read side) — but the
+           DbContext type is NOT referenced here. Query handlers depend on
+           an interface or the concrete context is injected via DI from the
+           Infrastructure layer. In this implementation, query handlers
+           receive the DbContext via constructor injection (registered in DI
+           by the WebApi layer) and import the type from Infrastructure.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api5.Domain\Api5.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>

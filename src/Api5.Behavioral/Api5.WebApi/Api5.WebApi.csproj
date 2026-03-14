@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api5.WebApi — ASP.NET Core Web API host for the Behavioral / CQRS tier.
+       Thin controllers that dispatch commands and queries via IMediator.
+       Same external REST contract as API 1/2/3/4.
+
+       Key differences from API 4:
+         - Controllers depend on IMediator, not service interfaces.
+         - No service registrations — MediatR discovers handlers by convention.
+         - Pipeline behaviors (Logging, Validation) registered as Transient.
+         - DomainEventInterceptor added to the interceptor chain.
+         - FluentValidation auto-validation DISABLED — validation is done
+           by the ValidationBehavior in the MediatR pipeline.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api5.Application\Api5.Application.csproj" />
+    <ProjectReference Include="..\Api5.Infrastructure\Api5.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

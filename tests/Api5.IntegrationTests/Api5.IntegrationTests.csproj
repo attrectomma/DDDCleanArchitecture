@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api5.IntegrationTests — Integration tests for the Behavioral / CQRS API.
+       Inherits shared test base classes from RetroBoard.IntegrationTests.Shared
+       and provides API 5-specific fixture wiring.
+
+       DESIGN: API 5 uses MediatR command/query handlers instead of services
+       and dispatches domain events via DomainEventInterceptor. All shared
+       tests (CRUD, Invariant, SoftDelete, Concurrency, ConsistencyBoundary)
+       are expected to PASS — API 5 maintains all the guarantees of API 3/4
+       with the same REST contract, just different internal plumbing.
+       ================================================================ -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Api5.Behavioral\Api5.WebApi\Api5.WebApi.csproj" />
+    <ProjectReference Include="..\RetroBoard.IntegrationTests.Shared\RetroBoard.IntegrationTests.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+</Project>

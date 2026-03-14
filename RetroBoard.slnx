@@ -24,10 +24,17 @@
     <Project Path="src/Api4.SplitAggregates/Api4.Infrastructure/Api4.Infrastructure.csproj" />
     <Project Path="src/Api4.SplitAggregates/Api4.WebApi/Api4.WebApi.csproj" />
   </Folder>
+  <Folder Name="/src/Api5.Behavioral/">
+    <Project Path="src/Api5.Behavioral/Api5.Application/Api5.Application.csproj" />
+    <Project Path="src/Api5.Behavioral/Api5.Domain/Api5.Domain.csproj" />
+    <Project Path="src/Api5.Behavioral/Api5.Infrastructure/Api5.Infrastructure.csproj" />
+    <Project Path="src/Api5.Behavioral/Api5.WebApi/Api5.WebApi.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Api2.IntegrationTests/Api2.IntegrationTests.csproj" />
     <Project Path="tests/Api3.IntegrationTests/Api3.IntegrationTests.csproj" />
     <Project Path="tests/Api4.IntegrationTests/Api4.IntegrationTests.csproj" />
+    <Project Path="tests/Api5.IntegrationTests/Api5.IntegrationTests.csproj" />
     <Project Path="tests/RetroBoard.IntegrationTests.Shared/RetroBoard.IntegrationTests.Shared.csproj" />
     <Project Path="tests/Api1.IntegrationTests/Api1.IntegrationTests.csproj" />
   </Folder>
