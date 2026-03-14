@@ -1,6 +1,7 @@
 using Api5.Application.DTOs.Requests;
 using Api5.Application.DTOs.Responses;
 using Api5.Application.Retros.Commands.AddColumn;
+using Api5.Application.Retros.Commands.ChangeVotingStrategy;
 using Api5.Application.Retros.Commands.CreateRetroBoard;
 using Api5.Application.Retros.Commands.RemoveColumn;
 using Api5.Application.Retros.Commands.RenameColumn;
@@ -47,7 +48,10 @@ public class RetroBoardsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(Guid projectId, CreateRetroBoardRequest request, CancellationToken cancellationToken)
     {
-        var command = new CreateRetroBoardCommand(projectId, request.Name);
+        var command = new CreateRetroBoardCommand(
+            projectId,
+            request.Name,
+            request.VotingStrategy ?? Domain.VoteAggregate.Strategies.VotingStrategyType.Default);
         RetroBoardResponse response = await _mediator.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { projectId, retroId = response.Id }, response);
     }
@@ -69,6 +73,33 @@ public class RetroBoardsController : ControllerBase
     public async Task<IActionResult> GetById(Guid projectId, Guid retroId, CancellationToken cancellationToken)
     {
         RetroBoardResponse response = await _mediator.Send(new GetRetroBoardQuery(retroId), cancellationToken);
+        return Ok(response);
+    }
+
+    /// <summary>Changes the voting strategy for a retro board.</summary>
+    /// <param name="retroId">The retro board ID.</param>
+    /// <param name="request">The request containing the new voting strategy.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The updated retro board.</returns>
+    /// <remarks>
+    /// DESIGN: The Strategy pattern allows each board to independently choose
+    /// its voting behaviour. Supported strategies:
+    ///   - <b>Default</b>: One vote per user per note (API 1–4 behaviour).
+    ///   - <b>Budget</b>: Dot voting — each user gets up to 3 votes per column
+    ///     and may place multiple votes on the same note.
+    ///
+    /// Changing the strategy does not invalidate existing votes.
+    /// </remarks>
+    [HttpPut("retros/{retroId:guid}/voting-strategy")]
+    [ProducesResponseType(typeof(RetroBoardResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangeVotingStrategy(
+        Guid retroId,
+        ChangeVotingStrategyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ChangeVotingStrategyCommand(retroId, request.VotingStrategy);
+        RetroBoardResponse response = await _mediator.Send(command, cancellationToken);
         return Ok(response);
     }
 

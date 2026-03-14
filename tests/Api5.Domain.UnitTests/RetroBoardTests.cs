@@ -2,6 +2,7 @@ using Api5.Domain.Common;
 using Api5.Domain.Exceptions;
 using Api5.Domain.RetroAggregate;
 using Api5.Domain.RetroAggregate.Events;
+using Api5.Domain.VoteAggregate.Strategies;
 using FluentAssertions;
 using Xunit;
 
@@ -46,6 +47,24 @@ public class RetroBoardTests
         // Assert
         board.ProjectId.Should().Be(projectId);
         board.Name.Should().Be(name);
+        board.VotingStrategyType.Should().Be(VotingStrategyType.Default);
+    }
+
+    /// <summary>
+    /// Verifies that a RetroBoard can be created with a specific voting strategy.
+    /// </summary>
+    [Fact]
+    public void Constructor_WithBudgetStrategy_SetsVotingStrategyType()
+    {
+        // Arrange
+        Guid projectId = Guid.NewGuid();
+        string name = "Budget Retro";
+
+        // Act
+        RetroBoard board = new RetroBoard(projectId, name, VotingStrategyType.Budget);
+
+        // Assert
+        board.VotingStrategyType.Should().Be(VotingStrategyType.Budget);
     }
 
     /// <summary>
@@ -362,6 +381,43 @@ public class RetroBoardTests
         NoteRemovedEvent removedEvent = domainEvent.Should().BeOfType<NoteRemovedEvent>().Subject;
         removedEvent.NoteId.Should().Be(note.Id);
         removedEvent.ColumnId.Should().Be(column.Id);
+    }
+
+    // ── SetVotingStrategy ───────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <see cref="RetroBoard.SetVotingStrategy"/> updates
+    /// the <see cref="RetroBoard.VotingStrategyType"/> property.
+    /// </summary>
+    [Fact]
+    public void SetVotingStrategy_ToBudget_UpdatesVotingStrategyType()
+    {
+        // Arrange
+        RetroBoard board = CreateBoard();
+        board.VotingStrategyType.Should().Be(VotingStrategyType.Default);
+
+        // Act
+        board.SetVotingStrategy(VotingStrategyType.Budget);
+
+        // Assert
+        board.VotingStrategyType.Should().Be(VotingStrategyType.Budget);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="RetroBoard.SetVotingStrategy"/> can switch
+    /// back from Budget to Default.
+    /// </summary>
+    [Fact]
+    public void SetVotingStrategy_BackToDefault_UpdatesVotingStrategyType()
+    {
+        // Arrange
+        RetroBoard board = new RetroBoard(Guid.NewGuid(), "Board", VotingStrategyType.Budget);
+
+        // Act
+        board.SetVotingStrategy(VotingStrategyType.Default);
+
+        // Assert
+        board.VotingStrategyType.Should().Be(VotingStrategyType.Default);
     }
 
     // ── Helper ──────────────────────────────────────────────────

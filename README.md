@@ -83,7 +83,8 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 - **Writes:** Command handlers load aggregates through repositories, enforce invariants, and persist via UoW
 - **Cross-cutting concerns:** Pipeline behaviors (validation, logging, transactions)
 - **Domain Events:** Aggregates raise events; handlers react (decoupled side effects)
-- **Key lesson:** CQRS eliminates the waste of loading full aggregates for read-only requests. Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve. This is "CQRS lite" — same database, separated code paths.
+- **Voting strategies:** **Strategy pattern** + **Specification pattern** enable configurable voting rules (Default: one vote per note; Budget: dot voting with per-column limits). Strategies compose different specifications using AND/OR/NOT boolean algebra.
+- **Key lesson:** CQRS eliminates the waste of loading full aggregates for read-only requests. Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve. The Strategy + Specification patterns demonstrate how to make business rules configurable without modifying existing code. This is "CQRS lite" — same database, separated code paths.
 
 ---
 
@@ -99,6 +100,7 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 | CQRS (read/write split) | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Mediator pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Domain events | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Strategy + Specification | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -115,7 +117,7 @@ Rich domain entities and aggregate roots are **unit testable without any infrast
 | `Api2.Domain.UnitTests` | Entity constructors, guards, invariant methods | ~29 |
 | `Api3.Domain.UnitTests` | Aggregate root operations (column/note/vote through RetroBoard) | ~25 |
 | `Api4.Domain.UnitTests` | Same as API 3, minus vote (Vote is its own aggregate) | ~23 |
-| `Api5.Domain.UnitTests` | Same as API 4, plus domain event assertions | ~29 |
+| `Api5.Domain.UnitTests` | Same as API 4, plus domain event assertions + Strategy/Specification tests | ~76 |
 
 ### Integration Tests (All 5 APIs)
 
@@ -215,7 +217,7 @@ The DocFX-powered documentation site includes:
 - **[Core Concepts](https://attrectomma.github.io/DDDCleanArchitecture/concepts/)** — Entities, aggregates, repositories, DTOs, and more
 - **[Migration Path](https://attrectomma.github.io/DDDCleanArchitecture/migration/)** — Walk through each API tier and understand what changes and why
 - **[Architecture](https://attrectomma.github.io/DDDCleanArchitecture/architecture/)** — Clean Architecture layers, dependency rules, project structure
-- **[Design Patterns](https://attrectomma.github.io/DDDCleanArchitecture/patterns/)** — Repository, Unit of Work, CQRS, Mediator, Domain Events, Interceptors
+- **[Design Patterns](https://attrectomma.github.io/DDDCleanArchitecture/patterns/)** — Repository, Unit of Work, CQRS, Mediator, Domain Events, Interceptors, Specification, Strategy
 - **[Testing Strategy](https://attrectomma.github.io/DDDCleanArchitecture/testing/)** — Integration tests, Testcontainers, Respawn, shared test infrastructure
 - **[API Reference](https://attrectomma.github.io/DDDCleanArchitecture/api/)** — Auto-generated from XML doc comments in the source code
 - **[Design Decisions](docs/DesignDecisions.md)** — Cross-API comparison of all key architectural decisions

@@ -2,7 +2,8 @@
 
 > **Pattern:** Command/Query Responsibility Segregation with MediatR.
 > Behavior-centric handlers replace noun-centric services. Domain events
-> decouple side effects.
+> decouple side effects. Strategy + Specification patterns enable configurable
+> voting rules.
 
 ## What Changes from API 4
 
@@ -14,6 +15,8 @@
 | Cross-cutting | Inline in services | **Pipeline behaviors** |
 | Side effects | Inline | **Domain events** |
 | Controller deps | Per-service | **IMediator only** |
+| Voting rules | Hardcoded one-vote-per-note | **Configurable via Strategy + Specification** |
+| Vote uniqueness | DB unique constraint | **Application-level specification** |
 
 ## CQRS — The Core Idea
 
@@ -105,6 +108,63 @@ public class NoteRemovedEventHandler : INotificationHandler<NoteRemovedEvent>
 ```
 
 The retro aggregate doesn't know about votes. The vote cleanup is **decoupled**.
+
+## Strategy + Specification Patterns
+
+API 5 introduces two additional design patterns for voting rules:
+
+### The Strategy Pattern — Configurable Voting
+
+Each retro board has a `VotingStrategyType` property that determines how votes
+are validated:
+
+| Strategy | Behaviour |
+|----------|-----------|
+| **Default** | One vote per user per note (same as API 1–4) |
+| **Budget** | Max 3 votes per user per column; multiple votes on same note allowed ("dot voting") |
+
+The `CastVoteCommandHandler` resolves the strategy from the board's configuration
+and delegates all vote validation to it — zero conditional branching:
+
+```csharp
+IVotingStrategy strategy = VotingStrategyFactory.Create(retro.VotingStrategyType);
+strategy.Validate(eligibilityContext);
+```
+
+### The Specification Pattern — Composable Rules
+
+Each voting rule is a standalone specification that evaluates a `VoteEligibilityContext`:
+
+```csharp
+// Each specification answers one question
+public class UniqueVotePerNoteSpecification : ISpecification<VoteEligibilityContext>
+{
+    public bool IsSatisfiedBy(VoteEligibilityContext ctx) =>
+        !ctx.UserAlreadyVotedOnNote;
+}
+```
+
+Strategies compose specifications differently:
+
+```csharp
+// Default: NoteExists AND IsMember AND UniqueVote
+// Budget:  NoteExists AND IsMember AND BudgetNotExceeded
+```
+
+The Budget strategy intentionally **omits** `UniqueVotePerNoteSpecification` and
+**adds** `VoteBudgetNotExceededSpecification`. This difference in composition is
+the educational payoff of combining Strategy + Specification.
+
+### DB Constraint Trade-off
+
+The API 4 unique index on `(NoteId, UserId)` was removed because the Budget
+strategy allows duplicate votes. The Default strategy enforces uniqueness at
+the application level. Under extreme concurrency, this creates a (rare) race
+condition risk — documented as an intentional trade-off.
+
+For full details, see:
+- [Specification Pattern](../patterns/specification-pattern.md)
+- [Strategy Pattern](../patterns/strategy-pattern.md)
 
 ## Trade-offs
 

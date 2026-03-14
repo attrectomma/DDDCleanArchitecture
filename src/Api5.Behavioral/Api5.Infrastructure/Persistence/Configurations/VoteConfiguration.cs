@@ -7,13 +7,22 @@ namespace Api5.Infrastructure.Persistence.Configurations;
 
 /// <summary>
 /// Configures Vote as a standalone aggregate root with its own
-/// concurrency token and a unique constraint on (NoteId, UserId).
+/// concurrency token and an index on (NoteId, UserId).
 /// </summary>
 /// <remarks>
-/// DESIGN: Identical to API 4. The unique index is the ultimate guarantee
-/// of the "one vote per user per note" invariant. Even if the
-/// application-level check in <c>CastVoteCommandHandler</c> races,
-/// this constraint prevents duplicates.
+/// DESIGN: The unique constraint on <c>(NoteId, UserId)</c> from API 4 has been
+/// replaced with a non-unique index. This is necessary because the
+/// <see cref="Api5.Domain.VoteAggregate.Strategies.BudgetVotingStrategy"/>
+/// allows multiple votes per user per note ("dot voting").
+///
+/// The <see cref="Api5.Domain.VoteAggregate.Strategies.DefaultVotingStrategy"/>
+/// enforces uniqueness at the application level via the
+/// <c>UniqueVotePerNoteSpecification</c>. Without the DB constraint, the
+/// Default strategy is susceptible to a rare race condition under high
+/// concurrency where two simultaneous requests both pass the <c>ExistsAsync</c>
+/// check. In production, mitigate this with serializable transactions or
+/// advisory locks. This trade-off is the price of configurable voting strategies
+/// and is a valuable educational discussion point.
 /// </remarks>
 public class VoteConfiguration : IEntityTypeConfiguration<Vote>
 {
@@ -31,9 +40,11 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
             .ValueGeneratedOnAddOrUpdate()
             .IsConcurrencyToken();
 
-        // Unique index: one vote per user per note — the DB safety net
+        // DESIGN: Non-unique index for query performance on (NoteId, UserId).
+        // Previously a unique constraint in API 4, now non-unique to support
+        // the BudgetVotingStrategy which allows multiple votes per user per note.
+        // See VoteConfiguration class remarks for the full trade-off discussion.
         builder.HasIndex(v => new { v.NoteId, v.UserId })
-            .IsUnique()
             .HasDatabaseName("IX_Vote_NoteId_UserId")
             .HasFilter("\"DeletedAt\" IS NULL");
 

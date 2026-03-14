@@ -1,4 +1,5 @@
 using Api5.Application.DTOs.Responses;
+using Api5.Domain.VoteAggregate.Strategies;
 using MediatR;
 
 namespace Api5.Application.Retros.Commands.CreateRetroBoard;
@@ -8,4 +9,11 @@ namespace Api5.Application.Retros.Commands.CreateRetroBoard;
 /// </summary>
 /// <param name="ProjectId">The ID of the project this retro belongs to.</param>
 /// <param name="Name">The name of the retro board.</param>
-public record CreateRetroBoardCommand(Guid ProjectId, string Name) : IRequest<RetroBoardResponse>;
+/// <param name="VotingStrategyType">
+/// The voting strategy for the board. Defaults to <see cref="VotingStrategyType.Default"/>
+/// (one vote per user per note).
+/// </param>
+public record CreateRetroBoardCommand(
+    Guid ProjectId,
+    string Name,
+    VotingStrategyType VotingStrategyType = VotingStrategyType.Default) : IRequest<RetroBoardResponse>;

@@ -6,9 +6,14 @@ namespace Api5.Application.DTOs.Responses;
 /// <param name="ProjectId">The ID of the project this retro board belongs to.</param>
 /// <param name="CreatedAt">The UTC timestamp when the retro board was created.</param>
 /// <param name="Columns">The columns in this retro board, or <c>null</c> if not loaded.</param>
+/// <param name="VotingStrategy">
+/// The name of the voting strategy configured for this board
+/// (e.g., "Default" or "Budget").
+/// </param>
 public record RetroBoardResponse(
     Guid Id,
     string Name,
     Guid ProjectId,
     DateTime CreatedAt,
-    List<ColumnResponse>? Columns);
+    List<ColumnResponse>? Columns,
+    string VotingStrategy);

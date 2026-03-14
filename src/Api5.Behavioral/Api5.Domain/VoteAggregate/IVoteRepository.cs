@@ -47,4 +47,21 @@ public interface IVoteRepository
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The list of votes for the note.</returns>
     Task<List<Vote>> GetByNoteIdAsync(Guid noteId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts the number of votes a user has cast on notes within a specific column.
+    /// Used to enforce the per-column vote budget in the
+    /// <see cref="Strategies.BudgetVotingStrategy"/>.
+    /// </summary>
+    /// <param name="columnId">The column whose notes to count votes for.</param>
+    /// <param name="userId">The user whose votes to count.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The number of votes the user has cast in the column.</returns>
+    /// <remarks>
+    /// DESIGN: This is a cross-aggregate query — Vote and Note belong to different
+    /// aggregates. The repository implementation joins Vote with Note to resolve
+    /// the column association. This method is only needed by the Budget voting
+    /// strategy; the Default strategy does not call it.
+    /// </remarks>
+    Task<int> CountByColumnAndUserAsync(Guid columnId, Guid userId, CancellationToken cancellationToken = default);
 }

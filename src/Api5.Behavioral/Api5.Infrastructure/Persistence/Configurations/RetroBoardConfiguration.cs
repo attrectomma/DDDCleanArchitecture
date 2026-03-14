@@ -1,4 +1,5 @@
 using Api5.Domain.RetroAggregate;
+using Api5.Domain.VoteAggregate.Strategies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,8 +10,10 @@ namespace Api5.Infrastructure.Persistence.Configurations;
 /// and its child entity <see cref="Column"/>.
 /// </summary>
 /// <remarks>
-/// DESIGN: Identical to API 4. The RetroBoard aggregate owns columns and notes
-/// but not votes. Vote has its own configuration in <see cref="VoteConfiguration"/>.
+/// DESIGN: Identical to API 4, with the addition of the
+/// <see cref="VotingStrategyType"/> column. The RetroBoard aggregate
+/// owns columns and notes but not votes. Vote has its own configuration
+/// in <see cref="VoteConfiguration"/>.
 /// </remarks>
 public class RetroBoardConfiguration : IEntityTypeConfiguration<RetroBoard>
 {
@@ -23,6 +26,15 @@ public class RetroBoardConfiguration : IEntityTypeConfiguration<RetroBoard>
         builder.Property(r => r.Name)
             .IsRequired()
             .HasMaxLength(300);
+
+        // DESIGN: Store the voting strategy as a readable string ("Default", "Budget")
+        // rather than an integer. This makes the database self-documenting and
+        // simplifies debugging.
+        builder.Property(r => r.VotingStrategyType)
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .HasDefaultValue(VotingStrategyType.Default)
+            .IsRequired();
 
         // DESIGN: xmin concurrency token. In API 5 (same as API 4), voting
         // does NOT bump this token because Vote is its own aggregate.

@@ -11,3 +11,5 @@ how they work, and which API tiers use them.
 - [Mediator Pattern](mediator.md)
 - [Domain Events](domain-events.md)
 - [Interceptor Pattern](interceptors.md)
+- [Specification Pattern](specification-pattern.md)
+- [Strategy Pattern](strategy-pattern.md)

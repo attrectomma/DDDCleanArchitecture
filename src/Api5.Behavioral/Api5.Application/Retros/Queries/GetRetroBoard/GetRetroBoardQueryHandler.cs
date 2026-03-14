@@ -71,7 +71,8 @@ public class GetRetroBoardQueryHandler : IRequestHandler<GetRetroBoardQuery, Ret
                         n.Text,
                         _context.Votes.Count(v => v.NoteId == n.Id)
                     )).ToList()
-                )).ToList()
+                )).ToList(),
+                r.VotingStrategyType.ToString()
             ))
             .FirstOrDefaultAsync(cancellationToken);
 

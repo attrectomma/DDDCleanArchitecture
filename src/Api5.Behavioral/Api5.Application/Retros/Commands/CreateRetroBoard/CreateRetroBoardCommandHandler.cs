@@ -45,11 +45,17 @@ public class CreateRetroBoardCommandHandler : IRequestHandler<CreateRetroBoardCo
         _ = await _projectRepository.GetByIdAsync(request.ProjectId, cancellationToken)
             ?? throw new NotFoundException("Project", request.ProjectId);
 
-        var retroBoard = new RetroBoard(request.ProjectId, request.Name);
+        var retroBoard = new RetroBoard(request.ProjectId, request.Name, request.VotingStrategyType);
 
         await _retroBoardRepository.AddAsync(retroBoard, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new RetroBoardResponse(retroBoard.Id, retroBoard.Name, retroBoard.ProjectId, retroBoard.CreatedAt, null);
+        return new RetroBoardResponse(
+            retroBoard.Id,
+            retroBoard.Name,
+            retroBoard.ProjectId,
+            retroBoard.CreatedAt,
+            null,
+            retroBoard.VotingStrategyType.ToString());
     }
 }

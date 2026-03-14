@@ -39,4 +39,5 @@ API 5: CQRS + MediatR       "Behavior-centric, scalable, but more indirection"
 | Business logic in | Services | Entities | Aggregate roots | Aggregate roots | Handlers + Domain |
 | Concurrency safe? | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Reads optimized? | ❌ | ❌ | ❌ | ❌ | ✅ (CQRS) |
-| Unit tests? | ❌ None | ✅ ~29 | ✅ ~25 | ✅ ~23 | ✅ ~29 |
+| Voting rules | Hardcoded | Hardcoded | Hardcoded | Hardcoded | ✅ Configurable (Strategy) |
+| Unit tests? | ❌ None | ✅ ~29 | ✅ ~25 | ✅ ~23 | ✅ ~76 |

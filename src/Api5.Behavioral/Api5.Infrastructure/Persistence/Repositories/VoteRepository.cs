@@ -1,3 +1,4 @@
+using Api5.Domain.RetroAggregate;
 using Api5.Domain.VoteAggregate;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,9 @@ namespace Api5.Infrastructure.Persistence.Repositories;
 /// The <see cref="GetByNoteIdAsync"/> method is retained because it is used
 /// by the <c>NoteRemovedEventHandler</c> to clean up orphaned votes — a
 /// write-side operation triggered by a domain event.
+///
+/// The <see cref="CountByColumnAndUserAsync"/> method was added to support
+/// the <c>BudgetVotingStrategy</c> which limits votes per column per user.
 /// </remarks>
 public class VoteRepository : IVoteRepository
 {
@@ -51,4 +55,21 @@ public class VoteRepository : IVoteRepository
         => await _context.Votes
             .Where(v => v.NoteId == noteId)
             .ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// DESIGN: This cross-aggregate query joins Vote with Note (via a subquery)
+    /// to resolve which notes belong to the target column. The query translates
+    /// to efficient SQL — EF Core generates a WHERE EXISTS or JOIN depending
+    /// on the provider.
+    /// </remarks>
+    public async Task<int> CountByColumnAndUserAsync(
+        Guid columnId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+        => await _context.Votes
+            .CountAsync(
+                v => v.UserId == userId
+                     && _context.Set<Note>().Any(n => n.Id == v.NoteId && n.ColumnId == columnId),
+                cancellationToken);
 }

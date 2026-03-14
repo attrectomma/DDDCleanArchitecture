@@ -1,6 +1,7 @@
 using Api5.Domain.Common;
 using Api5.Domain.Exceptions;
 using Api5.Domain.RetroAggregate.Events;
+using Api5.Domain.VoteAggregate.Strategies;
 
 namespace Api5.Domain.RetroAggregate;
 
@@ -42,13 +43,18 @@ public class RetroBoard : AggregateRoot
     /// </summary>
     /// <param name="projectId">The ID of the project this retro board belongs to.</param>
     /// <param name="name">The name of the retro board.</param>
+    /// <param name="votingStrategyType">
+    /// The voting strategy for this board. Defaults to <see cref="VotingStrategyType.Default"/>
+    /// (one vote per user per note).
+    /// </param>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="name"/> is null, empty, or whitespace.
     /// </exception>
-    public RetroBoard(Guid projectId, string name)
+    public RetroBoard(Guid projectId, string name, VotingStrategyType votingStrategyType = VotingStrategyType.Default)
     {
         ProjectId = projectId;
         Name = Guard.AgainstNullOrWhiteSpace(name, nameof(name));
+        VotingStrategyType = votingStrategyType;
     }
 
     /// <summary>Gets the ID of the project this retro board belongs to.</summary>
@@ -56,6 +62,20 @@ public class RetroBoard : AggregateRoot
 
     /// <summary>Gets the name of the retro board.</summary>
     public string Name { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the voting strategy type for this retro board.
+    /// Determines how votes are validated when users cast votes on notes.
+    /// </summary>
+    /// <remarks>
+    /// DESIGN: The Strategy pattern allows each board to independently choose
+    /// its voting behaviour. The <see cref="VotingStrategyType"/> is mapped to
+    /// a concrete <see cref="IVotingStrategy"/> implementation by
+    /// <see cref="VotingStrategyFactory"/> at vote-time. This keeps the
+    /// RetroBoard aggregate decoupled from voting logic — it stores the
+    /// configuration, not the behaviour.
+    /// </remarks>
+    public VotingStrategyType VotingStrategyType { get; private set; } = VotingStrategyType.Default;
 
     /// <summary>
     /// Gets the concurrency token mapped to PostgreSQL <c>xmin</c> system column.
@@ -69,6 +89,25 @@ public class RetroBoard : AggregateRoot
 
     /// <summary>Gets the read-only collection of columns in this retro board.</summary>
     public IReadOnlyCollection<Column> Columns => _columns.AsReadOnly();
+
+    // ── Voting strategy ────────────────────────────────────────
+
+    /// <summary>
+    /// Changes the voting strategy for this retro board.
+    /// </summary>
+    /// <param name="strategyType">The new voting strategy type.</param>
+    /// <remarks>
+    /// DESIGN: Changing the strategy is a configuration change on the aggregate.
+    /// Existing votes are not affected — only future vote attempts will be
+    /// validated against the new strategy. This is a conscious design choice:
+    /// re-validating existing votes on strategy change would require loading
+    /// all votes (a cross-aggregate operation) and could invalidate votes
+    /// that were legitimate under the previous strategy.
+    /// </remarks>
+    public void SetVotingStrategy(VotingStrategyType strategyType)
+    {
+        VotingStrategyType = strategyType;
+    }
 
     // ── Column operations ───────────────────────────────────────
 
