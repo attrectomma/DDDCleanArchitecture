@@ -165,6 +165,22 @@ The "one vote per user per note" rule crosses aggregates. It cannot be
 enforced atomically by a single aggregate's transaction. The solution:
 application-level check + database unique constraint.
 
+### API 5: Conditional Constraints via Options Pattern
+
+API 5 introduces configurable voting strategies (Default vs Budget). The
+Budget strategy allows multiple votes per user per note ("dot voting"), so the
+unique constraint on `(NoteId, UserId)` cannot be unconditionally applied.
+
+The `RetroBoardDbContext` receives `IOptions<VotingOptions>` and conditionally
+applies the unique index in `OnModelCreating`. When configured for Default,
+the DB constraint acts as a safety net (same as API 4). When configured for
+Budget, the index is non-unique and vote validation relies on application-level
+specifications only.
+
+This introduces a new concept: **configuration-dependent database schema** —
+managed via a custom `IModelCacheKeyFactory` so EF Core builds separate models
+per configuration.
+
 ---
 
 ## 6. Service vs. Handler Organization

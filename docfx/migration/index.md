@@ -40,4 +40,6 @@ API 5: CQRS + MediatR       "Behavior-centric, scalable, but more indirection"
 | Concurrency safe? | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Reads optimized? | ❌ | ❌ | ❌ | ❌ | ✅ (CQRS) |
 | Voting rules | Hardcoded | Hardcoded | Hardcoded | Hardcoded | ✅ Configurable (Strategy) |
+| Configuration | Hardcoded | Hardcoded | Hardcoded | Hardcoded | ✅ Options pattern |
+| Vote uniqueness | App check | App check | App check | DB unique index | Conditional (Options) |
 | Unit tests? | ❌ None | ✅ ~29 | ✅ ~25 | ✅ ~23 | ✅ ~76 |

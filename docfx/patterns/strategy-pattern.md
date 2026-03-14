@@ -62,20 +62,36 @@ public class RetroBoard : AggregateRoot
 ```csharp
 public static class VotingStrategyFactory
 {
-    public static IVotingStrategy Create(VotingStrategyType type) => type switch
+    public static IVotingStrategy Create(
+        VotingStrategyType type,
+        int maxVotesPerColumn = 3) => type switch
     {
         VotingStrategyType.Default => new DefaultVotingStrategy(),
-        VotingStrategyType.Budget  => new BudgetVotingStrategy(),
+        VotingStrategyType.Budget  => new BudgetVotingStrategy(maxVotesPerColumn),
         _ => throw new DomainException($"Unknown voting strategy: {type}")
     };
 }
 ```
 
+The `maxVotesPerColumn` parameter is sourced from `VotingOptions` via the
+[Options pattern](options-pattern.md), making the budget limit externally
+configurable via `appsettings.json`.
+
 ### 3. Handler delegates to the strategy
+
+The `CastVoteCommandHandler` receives `IOptions<VotingOptions>` via the
+[Options pattern](options-pattern.md) and passes `MaxVotesPerColumn` to the factory:
 
 ```csharp
 public class CastVoteCommandHandler : IRequestHandler<CastVoteCommand, VoteResponse>
 {
+    private readonly VotingOptions _votingOptions;
+
+    public CastVoteCommandHandler(..., IOptions<VotingOptions> votingOptions)
+    {
+        _votingOptions = votingOptions.Value;
+    }
+
     public async Task<VoteResponse> Handle(CastVoteCommand request, CancellationToken ct)
     {
         // 1. Load retro board (determines strategy)
@@ -84,8 +100,9 @@ public class CastVoteCommandHandler : IRequestHandler<CastVoteCommand, VoteRespo
         // 2. Build eligibility context from repository data
         var context = new VoteEligibilityContext(...);
 
-        // 3. Resolve strategy and validate
-        IVotingStrategy strategy = VotingStrategyFactory.Create(retro.VotingStrategyType);
+        // 3. Resolve strategy with configured budget and validate
+        IVotingStrategy strategy = VotingStrategyFactory.Create(
+            retro.VotingStrategyType, _votingOptions.MaxVotesPerColumn);
         strategy.Validate(context);  // throws on failure
 
         // 4. Create and persist vote
@@ -134,15 +151,19 @@ The Strategy pattern selects **which rules** apply. The [Specification pattern](
 
 ## Database Constraint Trade-off
 
-In API 4, a **unique index** on `(NoteId, UserId)` served as a safety net for the one-vote-per-note rule. With configurable strategies, this constraint was removed because the `BudgetVotingStrategy` allows multiple votes on the same note.
+In API 4, a **unique index** on `(NoteId, UserId)` served as a safety net for the one-vote-per-note rule. With configurable strategies, this constraint is now **conditional** — controlled by the [Options pattern](options-pattern.md).
 
-| Aspect | API 4 | API 5 |
-|--------|-------|-------|
-| Uniqueness enforcement | DB unique index + app check | App-level specification only |
-| Race condition protection | DB catches concurrent duplicates | Application-level check may race |
-| Multiple votes per note | ❌ Impossible | ✅ With Budget strategy |
+When `VotingOptions.DefaultVotingStrategy` is set to **Default**, the `RetroBoardDbContext` applies a **unique** index on `Vote(NoteId, UserId)`. When set to **Budget**, the index is **non-unique** because dot voting allows multiple votes per user per note.
 
-The `DefaultVotingStrategy` enforces uniqueness via `UniqueVotePerNoteSpecification` at the application level. Under extreme concurrency, a rare race condition could allow a duplicate. In production, mitigate with serializable transactions or advisory locks. This is a real-world trade-off of configurable business rules.
+| Aspect | API 4 | API 5 (Default config) | API 5 (Budget config) |
+|--------|-------|------------------------|----------------------|
+| Uniqueness enforcement | DB unique index + app check | DB unique index + specification | Specification only |
+| Race condition protection | DB catches concurrent duplicates | DB catches concurrent duplicates | Application-level check may race |
+| Multiple votes per note | ❌ Impossible | ❌ Impossible | ✅ With Budget strategy |
+
+This conditional schema is a key educational point: the Options pattern not only configures application behaviour but can also influence the database schema. A custom `IModelCacheKeyFactory` ensures EF Core builds separate models for each configuration.
+
+See [Options Pattern — In the Database Schema](options-pattern.md#in-the-database-schema) for the full implementation.
 
 ## Adding a New Strategy
 

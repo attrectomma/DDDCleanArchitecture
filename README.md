@@ -84,7 +84,8 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 - **Cross-cutting concerns:** Pipeline behaviors (validation, logging, transactions)
 - **Domain Events:** Aggregates raise events; handlers react (decoupled side effects)
 - **Voting strategies:** **Strategy pattern** + **Specification pattern** enable configurable voting rules (Default: one vote per note; Budget: dot voting with per-column limits). Strategies compose different specifications using AND/OR/NOT boolean algebra.
-- **Key lesson:** CQRS eliminates the waste of loading full aggregates for read-only requests. Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve. The Strategy + Specification patterns demonstrate how to make business rules configurable without modifying existing code. This is "CQRS lite" — same database, separated code paths.
+- **Configuration:** The **Options pattern** (`IOptions<VotingOptions>`) externalizes voting configuration (default strategy, budget limit) to `appsettings.json` with startup validation via `IValidateOptions<T>`. The database schema itself adapts — a conditional unique index on `Vote(NoteId, UserId)` is applied only for the Default strategy.
+- **Key lesson:** CQRS eliminates the waste of loading full aggregates for read-only requests. Behavior-centric design scales better for larger teams and feature sets, but adds indirection and a steeper learning curve. The Strategy + Specification patterns demonstrate how to make business rules configurable without modifying existing code. The Options pattern shows how to externalize configuration with type safety and startup validation. This is "CQRS lite" — same database, separated code paths.
 
 ---
 
@@ -101,6 +102,8 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 | Mediator pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Domain events | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Strategy + Specification | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Options pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Configuration | Hardcoded | Hardcoded | Hardcoded | Hardcoded | Externalized (`appsettings.json`) |
 
 ---
 
@@ -217,7 +220,7 @@ The DocFX-powered documentation site includes:
 - **[Core Concepts](https://attrectomma.github.io/DDDCleanArchitecture/concepts/)** — Entities, aggregates, repositories, DTOs, and more
 - **[Migration Path](https://attrectomma.github.io/DDDCleanArchitecture/migration/)** — Walk through each API tier and understand what changes and why
 - **[Architecture](https://attrectomma.github.io/DDDCleanArchitecture/architecture/)** — Clean Architecture layers, dependency rules, project structure
-- **[Design Patterns](https://attrectomma.github.io/DDDCleanArchitecture/patterns/)** — Repository, Unit of Work, CQRS, Mediator, Domain Events, Interceptors, Specification, Strategy
+- **[Design Patterns](https://attrectomma.github.io/DDDCleanArchitecture/patterns/)** — Repository, Unit of Work, CQRS, Mediator, Domain Events, Interceptors, Specification, Strategy, Options
 - **[Testing Strategy](https://attrectomma.github.io/DDDCleanArchitecture/testing/)** — Integration tests, Testcontainers, Respawn, shared test infrastructure
 - **[API Reference](https://attrectomma.github.io/DDDCleanArchitecture/api/)** — Auto-generated from XML doc comments in the source code
 - **[Design Decisions](docs/DesignDecisions.md)** — Cross-API comparison of all key architectural decisions

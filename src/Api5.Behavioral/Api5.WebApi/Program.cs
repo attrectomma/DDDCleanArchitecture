@@ -1,5 +1,6 @@
 using Api5.Application.Common.Behaviors;
 using Api5.Application.Common.Interfaces;
+using Api5.Application.Common.Options;
 using Api5.Application.Votes.Commands.CastVote;
 using Api5.Domain.ProjectAggregate;
 using Api5.Domain.RetroAggregate;
@@ -12,6 +13,8 @@ using Api5.WebApi.Middleware;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Options;
 
 // ================================================================
 // API 5 — Behavior-centric + CQRS + MediatR
@@ -27,6 +30,24 @@ using Microsoft.EntityFrameworkCore;
 // ================================================================
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── Voting Options (Options pattern + validation) ───────────
+// DESIGN: The Options pattern binds the "Voting" section of appsettings.json
+// to a strongly-typed VotingOptions class. Combined with IValidateOptions<T>
+// and ValidateOnStart(), misconfiguration (e.g., invalid strategy name,
+// non-positive budget) is caught at startup — not when a user casts a vote.
+//
+// Compare with API 1–4 where voting behaviour was entirely hardcoded.
+// The Options pattern makes behaviour configurable without code changes:
+//   appsettings.json:
+//     "Voting": { "DefaultVotingStrategy": "Budget", "MaxVotesPerColumn": 5 }
+
+builder.Services
+    .AddOptions<VotingOptions>()
+    .Bind(builder.Configuration.GetSection(VotingOptions.SectionName))
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IValidateOptions<VotingOptions>, VotingOptionsValidator>();
 
 // ── EF Core + Interceptors ──────────────────────────────────────
 
@@ -47,6 +68,12 @@ builder.Services.AddDbContext<RetroBoardDbContext>((serviceProvider, options) =>
     options.AddInterceptors(
         serviceProvider.GetRequiredService<AuditInterceptor>(),
         serviceProvider.GetRequiredService<DomainEventInterceptor>());
+
+    // DESIGN: Custom model cache key factory ensures the EF Core model is
+    // rebuilt when the VotingOptions configuration changes. This is needed
+    // because the Vote entity's unique index depends on the configured
+    // default voting strategy (see OnModelCreating in RetroBoardDbContext).
+    options.ReplaceService<IModelCacheKeyFactory, VotingStrategyModelCacheKeyFactory>();
 });
 
 // ── CQRS Read Side ──────────────────────────────────────────────

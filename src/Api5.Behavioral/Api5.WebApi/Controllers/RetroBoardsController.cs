@@ -48,10 +48,13 @@ public class RetroBoardsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(Guid projectId, CreateRetroBoardRequest request, CancellationToken cancellationToken)
     {
+        // DESIGN: The controller passes the caller's explicit strategy choice
+        // (or null) to the command. The handler resolves the configured default
+        // from VotingOptions when null — keeping the controller thin.
         var command = new CreateRetroBoardCommand(
             projectId,
             request.Name,
-            request.VotingStrategy ?? Domain.VoteAggregate.Strategies.VotingStrategyType.Default);
+            request.VotingStrategy);
         RetroBoardResponse response = await _mediator.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { projectId, retroId = response.Id }, response);
     }

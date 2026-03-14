@@ -8,5 +8,7 @@
   href: unit-tests.md
 - name: Concurrency Test Design
   href: concurrency-tests.md
+- name: Budget Voting Tests
+  href: budget-voting-tests.md
 - name: Why No Mocking?
   href: why-no-mocking.md

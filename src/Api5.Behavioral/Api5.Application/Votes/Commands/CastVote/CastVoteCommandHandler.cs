@@ -1,11 +1,13 @@
 using Api5.Application.Common.Exceptions;
 using Api5.Application.Common.Interfaces;
+using Api5.Application.Common.Options;
 using Api5.Application.DTOs.Responses;
 using Api5.Domain.ProjectAggregate;
 using Api5.Domain.RetroAggregate;
 using Api5.Domain.VoteAggregate;
 using Api5.Domain.VoteAggregate.Strategies;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace Api5.Application.Votes.Commands.CastVote;
 
@@ -39,6 +41,7 @@ public class CastVoteCommandHandler : IRequestHandler<CastVoteCommand, VoteRespo
     private readonly IRetroBoardRepository _retroRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly VotingOptions _votingOptions;
 
     /// <summary>
     /// Initializes a new instance of <see cref="CastVoteCommandHandler"/>.
@@ -47,16 +50,22 @@ public class CastVoteCommandHandler : IRequestHandler<CastVoteCommand, VoteRespo
     /// <param name="retroRepository">The retro board repository (for note/column lookup).</param>
     /// <param name="projectRepository">The project repository (for membership checks).</param>
     /// <param name="unitOfWork">The unit of work for persistence.</param>
+    /// <param name="votingOptions">
+    /// The voting configuration options, providing <see cref="VotingOptions.MaxVotesPerColumn"/>
+    /// for the <see cref="BudgetVotingStrategy"/>. Injected via the Options pattern.
+    /// </param>
     public CastVoteCommandHandler(
         IVoteRepository voteRepository,
         IRetroBoardRepository retroRepository,
         IProjectRepository projectRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IOptions<VotingOptions> votingOptions)
     {
         _voteRepository = voteRepository;
         _retroRepository = retroRepository;
         _projectRepository = projectRepository;
         _unitOfWork = unitOfWork;
+        _votingOptions = votingOptions.Value;
     }
 
     /// <summary>
@@ -107,7 +116,10 @@ public class CastVoteCommandHandler : IRequestHandler<CastVoteCommand, VoteRespo
         // DESIGN: The factory maps the board's VotingStrategyType enum to a
         // concrete IVotingStrategy. The strategy composes specifications via
         // AND and throws targeted domain exceptions on failure.
-        IVotingStrategy strategy = VotingStrategyFactory.Create(retro.VotingStrategyType);
+        // MaxVotesPerColumn is sourced from VotingOptions (Options pattern)
+        // so the budget limit is externally configurable via appsettings.json.
+        IVotingStrategy strategy = VotingStrategyFactory.Create(
+            retro.VotingStrategyType, _votingOptions.MaxVotesPerColumn);
         strategy.Validate(eligibilityContext);
 
         // Step 5: Create the vote aggregate and persist.

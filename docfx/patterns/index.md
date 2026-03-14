@@ -13,3 +13,4 @@ how they work, and which API tiers use them.
 - [Interceptor Pattern](interceptors.md)
 - [Specification Pattern](specification-pattern.md)
 - [Strategy Pattern](strategy-pattern.md)
+- [Options Pattern](options-pattern.md)

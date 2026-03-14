@@ -5,41 +5,41 @@ using Api5.Infrastructure.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using RetroBoard.IntegrationTests.Shared;
 using RetroBoard.IntegrationTests.Shared.Fixtures;
 
 namespace Api5.IntegrationTests.Fixtures;
 
 /// <summary>
-/// API 5-specific fixture that configures WebApplicationFactory
-/// to use a Testcontainer Postgres database and applies EF Core migrations.
+/// API 5 fixture configured for the Budget voting strategy.
+/// Creates a database schema WITHOUT a unique index on Vote (NoteId, UserId)
+/// so that the <see cref="BudgetVotingStrategy"/> can allow multiple votes
+/// per user per note ("dot voting").
 /// </summary>
 /// <remarks>
-/// DESIGN: Same pattern as Api3Fixture/Api4Fixture — this fixture manages its
-/// own <see cref="PostgresFixture"/> internally. The key difference from API 4
-/// is that the DbContext registration must include both the
-/// <see cref="AuditInterceptor"/> (Singleton) and the
-/// <see cref="DomainEventInterceptor"/> (Scoped). The
-/// DomainEventInterceptor depends on MediatR's <c>IPublisher</c>, so it
-/// must be resolved from the scoped service provider at DbContext creation time.
+/// DESIGN: This fixture demonstrates an important aspect of the Options pattern:
+/// the same application code can behave differently based on configuration.
+/// The shared <see cref="Api5Fixture"/> configures the Default strategy (with
+/// a unique vote constraint), while this fixture configures the Budget strategy
+/// (without the constraint). Each fixture represents a different deployment
+/// configuration.
 ///
-/// API 5 uses the same REST contract as APIs 1–4, so all shared test base
-/// classes run unchanged.
+/// In production, an operator would choose one strategy via <c>appsettings.json</c>.
+/// In tests, we use separate fixtures to validate both configurations.
 /// </remarks>
-public class Api5Fixture : ApiFixture<Program>
+public class Api5BudgetFixture : ApiFixture<Program>
 {
     private readonly PostgresFixture _ownedPostgresFixture;
 
     /// <summary>
-    /// Initializes a new instance of <see cref="Api5Fixture"/>.
+    /// Initializes a new instance of <see cref="Api5BudgetFixture"/>.
     /// Creates and manages its own <see cref="PostgresFixture"/>.
     /// </summary>
-    public Api5Fixture() : this(new PostgresFixture())
+    public Api5BudgetFixture() : this(new PostgresFixture())
     {
     }
 
-    private Api5Fixture(PostgresFixture postgresFixture) : base(postgresFixture)
+    private Api5BudgetFixture(PostgresFixture postgresFixture) : base(postgresFixture)
     {
         _ownedPostgresFixture = postgresFixture;
     }
@@ -64,22 +64,18 @@ public class Api5Fixture : ApiFixture<Program>
 
     /// <inheritdoc />
     /// <remarks>
-    /// DESIGN: The test fixture configures <see cref="VotingOptions"/> with
-    /// <see cref="VotingStrategyType.Default"/> as the default strategy. This
-    /// ensures the DbContext applies a UNIQUE index on <c>Vote(NoteId, UserId)</c>,
-    /// which acts as a database safety net against concurrent duplicate votes.
-    /// The shared concurrency tests depend on this uniqueness guarantee.
-    ///
-    /// The Options pattern makes this explicit and configurable — the same
-    /// mechanism that operators use in production (<c>appsettings.json</c>)
-    /// is used here to control test behaviour.
+    /// DESIGN: Configures <see cref="VotingOptions"/> with
+    /// <see cref="VotingStrategyType.Budget"/> as the default strategy.
+    /// This means the DbContext will NOT apply a unique index on
+    /// <c>Vote(NoteId, UserId)</c>, allowing the Budget strategy's dot voting
+    /// behaviour (multiple votes per user per note).
     /// </remarks>
     protected override void ConfigureServices(IServiceCollection services)
     {
-        // ── VotingOptions: Default strategy with unique vote constraint ──
+        // ── VotingOptions: Budget strategy without unique vote constraint ──
         services.Configure<VotingOptions>(opts =>
         {
-            opts.DefaultVotingStrategy = VotingStrategyType.Default;
+            opts.DefaultVotingStrategy = VotingStrategyType.Budget;
             opts.MaxVotesPerColumn = 3;
         });
 
@@ -92,9 +88,6 @@ public class Api5Fixture : ApiFixture<Program>
             services.Remove(descriptor);
         }
 
-        // DESIGN: Must re-register DbContext with both interceptors.
-        // The AuditInterceptor is Singleton and the DomainEventInterceptor
-        // is Scoped (because it depends on MediatR's IPublisher).
         services.AddDbContext<RetroBoardDbContext>((sp, options) =>
         {
             options.UseNpgsql(ConnectionString);

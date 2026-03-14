@@ -16,7 +16,8 @@
 | Side effects | Inline | **Domain events** |
 | Controller deps | Per-service | **IMediator only** |
 | Voting rules | Hardcoded one-vote-per-note | **Configurable via Strategy + Specification** |
-| Vote uniqueness | DB unique constraint | **Application-level specification** |
+| Vote uniqueness | DB unique constraint | **Conditional — DB unique index (Default) or app-level only (Budget)** |
+| Configuration | Hardcoded constants | **Options pattern (`IOptions<VotingOptions>`) + startup validation** |
 
 ## CQRS — The Core Idea
 
@@ -124,10 +125,12 @@ are validated:
 | **Budget** | Max 3 votes per user per column; multiple votes on same note allowed ("dot voting") |
 
 The `CastVoteCommandHandler` resolves the strategy from the board's configuration
-and delegates all vote validation to it — zero conditional branching:
+and delegates all vote validation to it — zero conditional branching. The budget
+limit is sourced from `VotingOptions` via the [Options pattern](../patterns/options-pattern.md):
 
 ```csharp
-IVotingStrategy strategy = VotingStrategyFactory.Create(retro.VotingStrategyType);
+IVotingStrategy strategy = VotingStrategyFactory.Create(
+    retro.VotingStrategyType, _votingOptions.MaxVotesPerColumn);
 strategy.Validate(eligibilityContext);
 ```
 
@@ -157,14 +160,81 @@ the educational payoff of combining Strategy + Specification.
 
 ### DB Constraint Trade-off
 
-The API 4 unique index on `(NoteId, UserId)` was removed because the Budget
-strategy allows duplicate votes. The Default strategy enforces uniqueness at
-the application level. Under extreme concurrency, this creates a (rare) race
-condition risk — documented as an intentional trade-off.
+The API 4 unique index on `(NoteId, UserId)` is now **conditional** — controlled
+by the [Options pattern](../patterns/options-pattern.md). When
+`VotingOptions.DefaultVotingStrategy` is `Default`, the `RetroBoardDbContext`
+applies a **unique** index as a DB safety net. When set to `Budget`, the index
+is **non-unique** because dot voting allows multiple votes per user per note.
+
+| Config | Unique index? | Race condition risk |
+|--------|--------------|--------------------|
+| Default | ✅ Yes — DB catches concurrent duplicates | None |
+| Budget | ❌ No — specification only | Rare, under extreme concurrency |
+
+This conditional schema is powered by `IOptions<VotingOptions>` injected into
+`RetroBoardDbContext`, with a custom `IModelCacheKeyFactory` to ensure EF Core
+builds separate models per configuration.
 
 For full details, see:
+- [Options Pattern](../patterns/options-pattern.md)
 - [Specification Pattern](../patterns/specification-pattern.md)
 - [Strategy Pattern](../patterns/strategy-pattern.md)
+
+## Options Pattern — Externalized Configuration
+
+API 5 uses the **Options pattern** (`IOptions<T>`) to externalize voting
+configuration that was hardcoded in API 1–4.
+
+### VotingOptions
+
+```csharp
+public class VotingOptions
+{
+    public const string SectionName = "Voting";
+    public VotingStrategyType DefaultVotingStrategy { get; set; } = VotingStrategyType.Default;
+    public int MaxVotesPerColumn { get; set; } = 3;
+}
+```
+
+### Startup Validation
+
+A dedicated `VotingOptionsValidator` implements `IValidateOptions<VotingOptions>`
+and runs at startup via `.ValidateOnStart()`. Invalid configuration (unknown
+enum value, non-positive budget) **crashes the app immediately** instead of
+failing silently at runtime:
+
+```csharp
+builder.Services
+    .AddOptions<VotingOptions>()
+    .Bind(builder.Configuration.GetSection(VotingOptions.SectionName))
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IValidateOptions<VotingOptions>, VotingOptionsValidator>();
+```
+
+### Where Options Flow
+
+| Consumer | What it uses | Why |
+|----------|-------------|-----|
+| `CreateRetroBoardCommandHandler` | `DefaultVotingStrategy` | Fallback when caller doesn't specify a strategy |
+| `CastVoteCommandHandler` | `MaxVotesPerColumn` | Passes budget limit to `VotingStrategyFactory` |
+| `RetroBoardDbContext` | `DefaultVotingStrategy` | Conditionally applies unique index on `Vote(NoteId, UserId)` |
+
+### appsettings.json
+
+```json
+{
+  "Voting": {
+    "DefaultVotingStrategy": "Default",
+    "MaxVotesPerColumn": 3
+  }
+}
+```
+
+Changing `DefaultVotingStrategy` to `"Budget"` switches the entire application
+to dot voting — no code change, no redeployment of binaries.
+
+For the full deep-dive, see [Options Pattern](../patterns/options-pattern.md).
 
 ## Trade-offs
 
@@ -173,8 +243,9 @@ For full details, see:
 | **More files** | ~50 files in the Application layer (13 commands × 3 + queries + handlers) |
 | **Indirection** | Controller → MediatR → Pipeline → Handler is harder to trace |
 | **Two data paths** | Command handlers use repos; query handlers use DbContext |
-| **Learning curve** | MediatR, pipeline behaviors, CQRS, domain events |
+| **Learning curve** | MediatR, pipeline behaviors, CQRS, domain events, Options pattern |
 | **"CQRS lite"** | Same database for reads and writes (no read replica) |
+| **Config-dependent schema** | Conditional unique index requires custom `IModelCacheKeyFactory` |
 
 ## When to Use This Level of Architecture
 

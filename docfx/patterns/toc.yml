@@ -16,3 +16,5 @@
   href: specification-pattern.md
 - name: Strategy Pattern
   href: strategy-pattern.md
+- name: Options Pattern
+  href: options-pattern.md
