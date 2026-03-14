@@ -18,9 +18,16 @@
     <Project Path="src/Api3.Aggregates/Api3.Infrastructure/Api3.Infrastructure.csproj" />
     <Project Path="src/Api3.Aggregates/Api3.WebApi/Api3.WebApi.csproj" />
   </Folder>
+  <Folder Name="/src/Api4.SplitAggregates/">
+    <Project Path="src/Api4.SplitAggregates/Api4.Application/Api4.Application.csproj" />
+    <Project Path="src/Api4.SplitAggregates/Api4.Domain/Api4.Domain.csproj" />
+    <Project Path="src/Api4.SplitAggregates/Api4.Infrastructure/Api4.Infrastructure.csproj" />
+    <Project Path="src/Api4.SplitAggregates/Api4.WebApi/Api4.WebApi.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Api2.IntegrationTests/Api2.IntegrationTests.csproj" />
     <Project Path="tests/Api3.IntegrationTests/Api3.IntegrationTests.csproj" />
+    <Project Path="tests/Api4.IntegrationTests/Api4.IntegrationTests.csproj" />
     <Project Path="tests/RetroBoard.IntegrationTests.Shared/RetroBoard.IntegrationTests.Shared.csproj" />
     <Project Path="tests/Api1.IntegrationTests/Api1.IntegrationTests.csproj" />
   </Folder>

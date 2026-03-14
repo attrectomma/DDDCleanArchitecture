@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api4.Application — Thin orchestration services, DTOs, and validators.
+       4 services (UserService, ProjectService, RetroBoardService, VoteService)
+       instead of API 3's 3. The new VoteService handles cross-aggregate
+       coordination for vote operations.
+
+       Key difference from API 3: VoteService is reintroduced because Vote
+       is now its own aggregate. The RetroBoardService no longer handles
+       vote operations. Cross-aggregate checks (note exists? user is member?
+       already voted?) live in VoteService.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api4.Domain\Api4.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+</Project>

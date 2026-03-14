@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api4.Domain — Split Aggregate domain model with four aggregate roots:
+       User, Project, RetroBoard (owns Columns → Notes but NOT Votes),
+       and Vote (standalone aggregate root).
+
+       Key difference from API 3: Vote is extracted from the RetroBoard
+       aggregate into its own aggregate root. This reduces write contention
+       (voting no longer locks the entire retro board) at the cost of
+       cross-aggregate invariant enforcement — the "one vote per user per
+       note" rule now relies on a DB unique constraint + application-level
+       check rather than the aggregate root's in-memory validation.
+       ================================================================ -->
+
+</Project>
