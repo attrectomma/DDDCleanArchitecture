@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api3.Application — Thin orchestration services, DTOs, and validators.
+       Only 3 services (UserService, ProjectService, RetroBoardService)
+       instead of API 2's 7. All business logic lives in aggregate roots.
+
+       Key difference from API 2: The Application layer no longer defines
+       repository interfaces — those live in the Domain layer (DDD pattern).
+       Services are pure orchestrators: load aggregate → call method → save.
+       No DuplicateException needed — all uniqueness checks are in aggregates.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api3.Domain\Api3.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+
+</Project>

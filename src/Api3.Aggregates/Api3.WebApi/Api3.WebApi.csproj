@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api3.WebApi — ASP.NET Core Web API host for the Aggregate Design tier.
+       Thin controllers that delegate to application services.
+       Same external contract as API 1/2.
+
+       Key difference from API 2:
+         - Fewer controllers (columns, notes, votes handled by RetroBoardsController)
+         - New ConcurrencyConflictMiddleware for DbUpdateConcurrencyException → 409
+         - Only 3 services registered instead of 7
+         - Only 3 repositories registered instead of 6+
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api3.Application\Api3.Application.csproj" />
+    <ProjectReference Include="..\Api3.Infrastructure\Api3.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

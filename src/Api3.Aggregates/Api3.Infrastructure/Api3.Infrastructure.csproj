@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api3.Infrastructure — EF Core DbContext, entity configurations,
+       interceptors, repositories, and Unit of Work implementation.
+       Depends on Api3.Domain and Api3.Application.
+
+       Key difference from API 2:
+         - Only 3 repositories (User, Project, RetroBoard) instead of 7.
+         - No ColumnRepository, NoteRepository, or VoteRepository.
+         - EF configurations for child entities are grouped under the
+           aggregate root configuration files.
+         - Aggregate roots use UseXminAsConcurrencyToken() for optimistic
+           concurrency via PostgreSQL's xmin system column.
+       ================================================================ -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Api3.Domain\Api3.Domain.csproj" />
+    <ProjectReference Include="..\Api3.Application\Api3.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

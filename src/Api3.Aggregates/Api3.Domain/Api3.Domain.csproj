@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api3.Domain — Aggregate-based domain model with two aggregate roots:
+       Project (owns Members) and RetroBoard (owns Columns → Notes → Votes).
+       No dependencies on any other project or infrastructure package.
+
+       Key difference from API 2: Repository interfaces now live here (in
+       the Domain layer), not in the Application layer. This follows the
+       DDD principle that the domain defines the contracts it needs,
+       and infrastructure implements them. Aggregate roots are the sole
+       entry points for all mutations within their boundary.
+       ================================================================ -->
+
+</Project>
+
