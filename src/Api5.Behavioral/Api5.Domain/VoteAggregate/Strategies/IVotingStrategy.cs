@@ -32,9 +32,36 @@ public interface IVotingStrategy
     /// Gets the composite specification representing all voting rules for this strategy.
     /// </summary>
     /// <remarks>
-    /// DESIGN: This property exposes the combined rule as a single
-    /// <see cref="ISpecification{T}"/> composed via AND/OR/NOT. It can be
-    /// used for quick boolean eligibility checks without detailed error messages.
+    /// DESIGN (dual-surface): The strategy exposes two ways to evaluate eligibility:
+    /// <list type="bullet">
+    ///   <item><see cref="Rules"/> — returns a single <see cref="ISpecification{T}"/> composed
+    ///   via AND/OR/NOT. It yields a flat <c>bool</c> and is ideal for scenarios where you
+    ///   need to check eligibility <em>without</em> throwing or need to compose the check
+    ///   into a larger expression.</item>
+    ///   <item><see cref="Validate"/> — evaluates the same individual specifications but
+    ///   throws a targeted domain exception on the <em>first</em> failing rule, providing
+    ///   a meaningful error message for API consumers.</item>
+    /// </list>
+    ///
+    /// In this codebase, the production command handler (<c>CastVoteCommandHandler</c>)
+    /// calls <see cref="Validate"/> because it needs specific error messages. The
+    /// <see cref="Rules"/> property is not currently called in production code, but it
+    /// exists to demonstrate the Specification pattern's composability and to support
+    /// scenarios such as:
+    /// <list type="bullet">
+    ///   <item><b>Bulk eligibility filtering</b> — a query handler could call
+    ///   <c>strategy.Rules.IsSatisfiedBy(ctx)</c> in a loop over many notes to build
+    ///   a "can vote" / "cannot vote" UI indicator without throwing per item.</item>
+    ///   <item><b>UI pre-flight checks</b> — a front-end-facing endpoint could return
+    ///   a boolean eligibility result so the UI can disable the vote button before
+    ///   the user even clicks it.</item>
+    ///   <item><b>Compound specifications</b> — a new strategy could compose
+    ///   <c>existingStrategy.Rules.And(additionalSpec)</c> to extend rules without
+    ///   subclassing.</item>
+    /// </list>
+    ///
+    /// The unit tests exercise <see cref="Rules"/> directly to prove that the composite
+    /// evaluates correctly, independently from the exception-throwing path.
     /// </remarks>
     ISpecification<VoteEligibilityContext> Rules { get; }
 

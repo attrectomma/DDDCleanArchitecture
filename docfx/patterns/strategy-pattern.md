@@ -149,6 +149,52 @@ The Strategy pattern selects **which rules** apply. The [Specification pattern](
 └─────────────────────────────────────────────────────┘
 ```
 
+## The Dual-Surface Design: `Rules` vs `Validate`
+
+Each `IVotingStrategy` implementation exposes its business rules through **two complementary surfaces**:
+
+```csharp
+public interface IVotingStrategy
+{
+    ISpecification<VoteEligibilityContext> Rules { get; }   // bool result
+    void Validate(VoteEligibilityContext context);           // throws on failure
+}
+```
+
+### When to use each
+
+| Use `Validate` when… | Use `Rules` when… |
+|---|---|
+| You need a specific error message per failing rule | You need a simple pass/fail boolean |
+| The caller must report *which* rule failed (e.g., API error response) | You're checking eligibility in bulk (e.g., all notes on a board) |
+| You're on the write path — the vote will be created if validation passes | You're on the read path — no mutation, just querying eligibility |
+
+### Production path today
+
+The `CastVoteCommandHandler` calls `strategy.Validate(context)` because it needs to return Problem Details with a meaningful message. The `Rules` composite is **not called in production code** — it exists to demonstrate specification composability and to enable future scenarios.
+
+### Hypothetical `Rules` usage
+
+```csharp
+// Query handler: return vote eligibility for every note on the board
+public async Task<IReadOnlyList<NoteEligibility>> Handle(
+    GetBoardEligibilityQuery request, CancellationToken ct)
+{
+    IVotingStrategy strategy = VotingStrategyFactory.Create(
+        retro.VotingStrategyType, _votingOptions.MaxVotesPerColumn);
+
+    return notes.Select(note =>
+    {
+        VoteEligibilityContext ctx = BuildContext(note, request.UserId);
+        return new NoteEligibility(note.Id, strategy.Rules.IsSatisfiedBy(ctx));
+    }).ToList();
+}
+```
+
+In this scenario, calling `Validate` would require try/catch per note — awkward and slow. `Rules` gives a clean boolean without exception overhead.
+
+For more detail on the composability benefits, see [Specification Pattern — Rules vs Validate](specification-pattern.md#rules-vs-validate--two-surfaces-for-the-same-logic).
+
 ## Database Constraint Trade-off
 
 In API 4, a **unique index** on `(NoteId, UserId)` served as a safety net for the one-vote-per-note rule. With configurable strategies, this constraint is now **conditional** — controlled by the [Options pattern](options-pattern.md).

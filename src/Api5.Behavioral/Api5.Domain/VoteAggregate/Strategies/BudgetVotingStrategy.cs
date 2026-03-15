@@ -68,6 +68,12 @@ public class BudgetVotingStrategy : IVotingStrategy
     /// Composite rule: NoteExists AND UserIsProjectMember AND VoteBudgetNotExceeded.
     /// Note: UniqueVotePerNote is intentionally absent — multiple votes on the
     /// same note are allowed under budget voting.
+    ///
+    /// DESIGN (dual-surface): This composite is not called in the current production
+    /// path — <see cref="Validate"/> is used instead because it provides per-rule error
+    /// messages. The composite exists to demonstrate specification composability and to
+    /// support future scenarios like bulk eligibility checks or UI pre-flight queries
+    /// (see <see cref="IVotingStrategy.Rules"/> for details).
     /// </remarks>
     public ISpecification<VoteEligibilityContext> Rules =>
         _noteExists

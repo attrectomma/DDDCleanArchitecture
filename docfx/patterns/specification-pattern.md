@@ -119,6 +119,38 @@ public void And_BothSatisfied_ReturnsTrue()
 }
 ```
 
+## Rules vs Validate — Two Surfaces for the Same Logic
+
+Each `IVotingStrategy` exposes the same business rules through two surfaces:
+
+| Surface | Return type | Purpose |
+|---------|------------|---------|
+| `Rules` (property) | `ISpecification<VoteEligibilityContext>` → `bool` | Quick boolean eligibility check — no exceptions, no error messages |
+| `Validate` (method) | `void` (throws on failure) | Detailed validation — throws a targeted domain exception on the **first** failing rule |
+
+### Why both?
+
+The **production path** (`CastVoteCommandHandler`) calls `Validate` because the API needs to return a Problem Details response with a specific error message ("User already voted", "Budget exceeded", etc.). Evaluating all rules as a flat `bool` would lose that diagnostic information.
+
+The **`Rules` composite** is not on the current production path, but it demonstrates a core benefit of the Specification pattern — composability — and supports scenarios such as:
+
+1. **Bulk eligibility filtering** — A query handler could loop over every note on a board and call `strategy.Rules.IsSatisfiedBy(ctx)` to build a list of "can vote" / "cannot vote" indicators for the UI, without throwing an exception per ineligible note.
+
+2. **UI pre-flight checks** — A lightweight endpoint could return a boolean so the front end can disable the vote button *before* the user clicks it.
+
+3. **Compound specifications** — A new strategy could wrap an existing strategy's rules: `existingStrategy.Rules.And(newSpec)`, reusing the composite without subclassing or duplicating specification wiring.
+
+```csharp
+// Example: bulk eligibility check (hypothetical query handler)
+List<NoteEligibility> results = notes.Select(note =>
+{
+    VoteEligibilityContext ctx = BuildContext(note, userId);
+    return new NoteEligibility(note.Id, strategy.Rules.IsSatisfiedBy(ctx));
+}).ToList();
+```
+
+The unit tests exercise `Rules` directly to prove the composite evaluates correctly, independently from the exception-throwing path. This separation lets you test the composition logic without catching exceptions.
+
 ## Trade-offs
 
 | Benefit | Cost |
@@ -128,6 +160,7 @@ public void And_BothSatisfied_ReturnsTrue()
 | Composable with AND/OR/NOT | Indirection — must trace through composites |
 | New rules = new classes (Open/Closed) | Slight learning curve for the pattern |
 | Domain stays pure and synchronous | Handler must pre-fetch all data for the context |
+| Dual surface (Rules + Validate) covers both boolean and exception scenarios | `Rules` is not on the production path yet — it's forward-looking |
 
 ## When to Use
 
