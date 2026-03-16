@@ -145,6 +145,9 @@ Fewer classes than API 1, but the aggregate root contains the business rule.
 
 ## Where to Go Next
 
+- [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html)
+  on martinfowler.com — Martin Fowler's original pattern catalog entry from
+  *Patterns of Enterprise Application Architecture*.
 - [API 0 — Transaction Script](../migration/api0-transaction-script.md) — The
   migration guide for Api0a → Api0b.
 - [Repository Pattern](repository-pattern.md) — The abstraction that

@@ -5,6 +5,7 @@ how they work, and which API tiers use them.
 
 ## Patterns
 
+- [Transaction Script Pattern](transaction-script-pattern.md)
 - [Repository Pattern](repository-pattern.md)
 - [Unit of Work Pattern](unit-of-work-pattern.md)
 - [CQRS — Command Query Responsibility Segregation](cqrs.md)
