@@ -3,7 +3,8 @@
 Welcome to the **RetroBoard** documentation site. This is an educational resource
 that teaches .NET developers how to evolve a codebase from naïve CRUD toward
 proper Domain-Driven Design through **five progressive implementations** of the
-same business domain.
+same business domain — plus a **parallel Transaction Script track** that asks
+*"What if layers aren't needed?"*
 
 ## Who Is This For?
 
@@ -28,6 +29,22 @@ sophisticated architecture:
 | [API 4 — Split Aggregates](migration/api4-split-aggregates.md) | Right-size your aggregates | Vote as its own aggregate, cross-aggregate checks |
 | [API 5 — CQRS + MediatR](migration/api5-cqrs-mediatr.md) | Behavior over nouns | Command/Query separation, domain events, pipeline behaviors |
 
+## The Parallel Track — Transaction Script (API 0)
+
+Not every application needs four layers. API 0 is a **single-project alternative**
+that implements the same REST endpoints using the Transaction Script pattern
+(Minimal APIs + DbContext, no layers, no repositories, no services):
+
+| API | Theme | Key Concept |
+|-----|-------|-------------|
+| [Api0a — Transaction Script](migration/api0-transaction-script.md) | The simplest thing that works | Single project, endpoint handlers talk directly to DbContext |
+| [Api0b — Transaction Script + DB Safety](migration/api0-transaction-script.md) | Fix concurrency with ~35 lines | Add xmin tokens + catch DB exceptions in middleware |
+
+> [!NOTE]
+> API 0 is **not** part of the linear evolution path. It exists to show that the
+> Transaction Script pattern is a legitimate choice for small/simple domains —
+> and to make the trade-offs visible when you compare it to API 1–5.
+
 ## Quick Navigation
 
 - **[Core Concepts](concepts/index.md)** — Learn the building blocks (entities, repositories, services, DTOs, aggregates, etc.)
@@ -51,8 +68,11 @@ cd DDDCleanArchitecture
 # Start PostgreSQL
 docker compose up -d
 
-# Run any API
+# Run any API (main path)
 dotnet run --project src/Api1.AnemicCrud/Api1.WebApi
+
+# Run the Transaction Script alternative
+dotnet run --project src/Api0.TransactionScript/Api0b.WebApi
 
 # Run all integration tests
 dotnet test
