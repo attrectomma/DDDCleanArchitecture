@@ -162,6 +162,7 @@ This is an **educational repository**. Comments are critical.
 
 When generating code, check which API tier you are working in:
 
+- **API 0a/0b:** Single project, Transaction Script, Minimal APIs. No layers, no repositories, no services. Business logic is in endpoint handlers. Api0a has no concurrency safety. Api0b adds DB-level concurrency (xmin + unique constraints + middleware). This is intentional — do not add layers.
 - **API 1:** Entities are anemic (public setters, no methods). Business logic is in services. This is intentional — do not "improve" it.
 - **API 2:** Entities are rich (private setters, methods). Services are thin orchestrators. Some cross-entity checks still live in services — this is intentional.
 - **API 3:** Aggregates exist. There are only aggregate-level repositories. No per-entity repositories.

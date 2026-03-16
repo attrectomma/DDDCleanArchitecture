@@ -1,5 +1,7 @@
 - name: Patterns Overview
   href: index.md
+- name: Transaction Script Pattern
+  href: transaction-script-pattern.md
 - name: Repository Pattern
   href: repository-pattern.md
 - name: Unit of Work Pattern

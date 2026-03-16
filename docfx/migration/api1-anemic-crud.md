@@ -2,6 +2,10 @@
 
 > **Pattern:** Table → Entity → Repository → Service → Controller (1-to-1)
 
+> 💡 **See also:** Before diving into the layered approach, see
+> [API 0 — Transaction Script](api0-transaction-script.md) for a single-project
+> alternative that achieves the same REST contract with a fraction of the code.
+
 ## What This Tier Shows
 
 This is the architecture you see in most junior codebases. It's not wrong for

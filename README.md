@@ -36,7 +36,19 @@ We model a **Retrospective Board** tool (think: a simplified retro app for agile
 
 ---
 
-## 🏗️ The Five APIs
+## 🏗️ The APIs
+
+This repository contains two tracks:
+
+### Parallel Track: API 0 — Transaction Script
+> *"What if I just kept it simple?"*
+
+API 0 is **not** part of the linear progression. It exists as a side-by-side comparison — a single-project, no-layers alternative using the **Transaction Script** pattern (Fowler, *PoEAA*) with Minimal APIs.
+
+- **Api0a** — No concurrency safety. Same failures as API 1/2. One project, ~18 files.
+- **Api0b** — Adds DB-level concurrency (xmin tokens + unique constraint handling in middleware). **~35 lines of diff** fix the same concurrency tests that took three full API rewrites (API 1 → 2 → 3) in the DDD path.
+
+### Main Path: APIs 1–5 (Progressive DDD Evolution)
 
 Each API implements the same domain and exposes the same REST endpoints, but with progressively better architecture:
 
@@ -91,19 +103,22 @@ Each API implements the same domain and exposes the same REST endpoints, but wit
 
 ## 📊 Tier Comparison
 
-| Aspect | API 1 | API 2 | API 3 | API 4 | API 5 |
-|--------|:-----:|:-----:|:-----:|:-----:|:-----:|
-| Business logic location | Services | Entities | Aggregate roots | Aggregate roots | Handlers + Domain |
-| Repository granularity | Per-table | Per-table | Per-aggregate | Per-aggregate | Per-aggregate |
-| Consistency boundary | ❌ None | ❌ None | ✅ Aggregate | ✅ Aggregate | ✅ Aggregate |
-| Optimistic concurrency | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Write contention risk | N/A | N/A | ⚠️ High | ✅ Low | ✅ Low |
-| CQRS (read/write split) | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Mediator pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Domain events | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Strategy + Specification | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Options pattern | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Configuration | Hardcoded | Hardcoded | Hardcoded | Hardcoded | Externalized (`appsettings.json`) |
+| Aspect | Api0a | Api0b | API 1 | API 2 | API 3 | API 4 | API 5 |
+|--------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+| Projects | 1 | 1 | 4 | 4 | 4 | 4 | 4 |
+| API style | Minimal APIs | Minimal APIs | Controllers | Controllers | Controllers | Controllers | Controllers |
+| Pattern | Transaction Script | Transaction Script | Layered CRUD | Rich Domain | Aggregates | Split Aggregates | CQRS + MediatR |
+| Business logic location | Endpoint handlers | Endpoint handlers | Services | Entities | Aggregate roots | Aggregate roots | Handlers + Domain |
+| Repository granularity | None (DbContext) | None (DbContext) | Per-table | Per-table | Per-aggregate | Per-aggregate | Per-aggregate |
+| Consistency boundary | ❌ None | ❌ None | ❌ None | ❌ None | ✅ Aggregate | ✅ Aggregate | ✅ Aggregate |
+| Optimistic concurrency | ❌ | ✅ (DB) | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Write contention risk | N/A | N/A | N/A | N/A | ⚠️ High | ✅ Low | ✅ Low |
+| CQRS (read/write split) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Mediator pattern | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Domain events | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Strategy + Specification | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Options pattern | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Configuration | Hardcoded | Hardcoded | Hardcoded | Hardcoded | Hardcoded | Hardcoded | Externalized (`appsettings.json`) |
 
 ---
 
@@ -122,19 +137,19 @@ Rich domain entities and aggregate roots are **unit testable without any infrast
 | `Api4.Domain.UnitTests` | Same as API 3, minus vote (Vote is its own aggregate) | ~23 |
 | `Api5.Domain.UnitTests` | Same as API 4, plus domain event assertions + Strategy/Specification tests | ~76 |
 
-### Integration Tests (All 5 APIs)
+### Integration Tests (All APIs)
 
-All five APIs share the **exact same integration test suite**. Tests run end-to-end: HTTP request → API → PostgreSQL (running in Docker via Testcontainers).
+All APIs (including API 0) share the **exact same integration test suite**. Tests run end-to-end: HTTP request → API → PostgreSQL (running in Docker via Testcontainers).
 
-| Test Category | API 1 | API 2 | API 3 | API 4 | API 5 |
-|--------------|:-----:|:-----:|:-----:|:-----:|:-----:|
-| CRUD happy path | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Invariant enforcement | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Soft delete | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Concurrency conflicts | ❌ Fail | ❌ Fail | ✅ Pass | ✅ Pass | ✅ Pass |
-| Consistency under load | ❌ Fail | ❌ Fail | ✅ Pass | ✅ Pass | ✅ Pass |
+| Test Category | Api0a | Api0b | API 1 | API 2 | API 3 | API 4 | API 5 |
+|--------------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+| CRUD happy path | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Invariant enforcement | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Soft delete | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Concurrency conflicts | ❌ Fail | ✅ Pass | ❌ Fail | ❌ Fail | ✅ Pass | ✅ Pass | ✅ Pass |
+| Consistency under load | ❌ Fail | ❌ Fail | ❌ Fail | ❌ Fail | ✅ Pass | ✅ Pass | ✅ Pass |
 
-> Concurrency tests are **designed to fail** on API 1 and API 2. This is the point — it makes the value of proper aggregate design tangible.
+> Concurrency tests are **designed to fail** on Api0a, API 1, and API 2. This is the point — it makes the value of proper concurrency handling tangible. Api0b shows that the fix can be purely database-level (~35 lines); API 3+ shows the DDD approach.
 
 ---
 
@@ -157,7 +172,7 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 ```
 ├── docs/                          # Implementation plans and design decision docs
 │   ├── DesignDecisions.md         # Cross-API design decisions comparison
-│   └── 01–05 per-API plans        # Detailed plans for each API tier
+│   └── 01–06 per-API plans        # Detailed plans for each API tier
 ├── docfx/                         # DocFX documentation site (deployed to GitHub Pages)
 │   ├── concepts/                  # Core concept explanations
 │   ├── migration/                 # Per-API tier migration guides
@@ -166,6 +181,9 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 │   ├── testing/                   # Test strategy documentation
 │   └── api/                       # Auto-generated API reference
 ├── src/
+│   ├── Api0.TransactionScript/    # API 0 — Transaction Script (parallel track)
+│   │   ├── Api0a.WebApi/          #   No concurrency safety
+│   │   └── Api0b.WebApi/          #   DB-level concurrency safety
 │   ├── Api1.AnemicCrud/           # API 1 — Anemic CRUD
 │   ├── Api2.RichDomain/           # API 2 — Rich Domain Models
 │   ├── Api3.Aggregates/           # API 3 — Aggregate Design
@@ -173,6 +191,8 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 │   └── Api5.Behavioral/           # API 5 — MediatR + Domain Events
 ├── tests/
 │   ├── RetroBoard.IntegrationTests.Shared/
+│   ├── Api0a.IntegrationTests/
+│   ├── Api0b.IntegrationTests/
 │   ├── Api1.IntegrationTests/
 │   ├── Api2.IntegrationTests/
 │   ├── Api3.IntegrationTests/
@@ -184,7 +204,7 @@ All five APIs share the **exact same integration test suite**. Tests run end-to-
 │   └── Api5.Domain.UnitTests/
 ├── .github/workflows/docs.yml     # GitHub Actions: build & deploy DocFX to Pages
 ├── docker-compose.yml
-└── RetroBoard.sln
+└── RetroBoard.slnx
 ```
 
 ---

@@ -1,5 +1,7 @@
 - name: Migration Path Overview
   href: index.md
+- name: "API 0 — Transaction Script"
+  href: api0-transaction-script.md
 - name: "API 1 — Anemic CRUD"
   href: api1-anemic-crud.md
 - name: "API 2 — Rich Domain"

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api0a.IntegrationTests — Integration tests for the Transaction Script API.
+       Inherits shared test base classes from RetroBoard.IntegrationTests.Shared
+       and provides Api0a-specific fixture wiring.
+       DESIGN: Same pattern as Api1–5 test projects. The shared tests validate
+       the REST contract — same endpoints, same DTOs, same assertions.
+       ================================================================ -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Api0.TransactionScript\Api0a.WebApi\Api0a.WebApi.csproj" />
+    <ProjectReference Include="..\RetroBoard.IntegrationTests.Shared\RetroBoard.IntegrationTests.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+</Project>

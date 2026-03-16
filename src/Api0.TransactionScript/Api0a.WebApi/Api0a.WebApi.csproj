@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api0a.WebApi — Single-project Transaction Script API.
+       No layers, no repositories, no services, no Unit of Work.
+       Endpoints talk directly to the DbContext.
+       DESIGN: This is intentionally a single project. The Transaction Script
+       pattern keeps everything in one place — entities, DTOs, data access,
+       and endpoint handlers. Compare with API 1's four-project structure
+       to see the cost of layering for a simple domain.
+       ================================================================ -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

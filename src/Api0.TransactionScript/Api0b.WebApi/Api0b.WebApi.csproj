@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- ================================================================
+       Api0b.WebApi — Single-project Transaction Script API WITH
+       database-level concurrency safety.
+       DESIGN: This is a copy of Api0a with ~35 lines of targeted changes:
+         1. xmin concurrency tokens on User, Project, RetroBoard entities
+         2. xmin mapping in OnModelCreating
+         3. DbUpdateConcurrencyException + DbUpdateException (23505) catch
+            blocks in the GlobalExceptionHandlerMiddleware
+       No endpoint handler code changed. No new abstractions. No new
+       projects. The same concurrency tests that FAIL in Api0a PASS here.
+       ================================================================ -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

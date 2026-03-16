@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ================================================================
+       Api0b.IntegrationTests — Integration tests for the Transaction Script
+       API with database concurrency safety.
+       Inherits shared test base classes from RetroBoard.IntegrationTests.Shared
+       and provides Api0b-specific fixture wiring.
+       DESIGN: Same pattern as Api0a test project. The shared tests validate
+       the REST contract. The key difference: CONCURRENCY TESTS NOW PASS
+       because Api0b catches DbUpdateException (23505) and
+       DbUpdateConcurrencyException in its middleware.
+       ================================================================ -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Api0.TransactionScript\Api0b.WebApi\Api0b.WebApi.csproj" />
+    <ProjectReference Include="..\RetroBoard.IntegrationTests.Shared\RetroBoard.IntegrationTests.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+</Project>

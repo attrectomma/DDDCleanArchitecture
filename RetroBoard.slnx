@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/Api0.TransactionScript/">
+    <Project Path="src/Api0.TransactionScript/Api0a.WebApi/Api0a.WebApi.csproj" />
+    <Project Path="src/Api0.TransactionScript/Api0b.WebApi/Api0b.WebApi.csproj" />
+  </Folder>
   <Folder Name="/src/Api1.AnemicCrud/">
     <Project Path="src/Api1.AnemicCrud/Api1.Domain/Api1.Domain.csproj" />
     <Project Path="src/Api1.AnemicCrud/Api1.Application/Api1.Application.csproj" />
@@ -31,6 +35,8 @@
     <Project Path="src/Api5.Behavioral/Api5.WebApi/Api5.WebApi.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Api0a.IntegrationTests/Api0a.IntegrationTests.csproj" />
+    <Project Path="tests/Api0b.IntegrationTests/Api0b.IntegrationTests.csproj" />
     <Project Path="tests/Api2.IntegrationTests/Api2.IntegrationTests.csproj" />
     <Project Path="tests/Api3.IntegrationTests/Api3.IntegrationTests.csproj" />
     <Project Path="tests/Api4.IntegrationTests/Api4.IntegrationTests.csproj" />

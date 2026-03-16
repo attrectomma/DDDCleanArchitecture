@@ -51,3 +51,7 @@ public class RetroBoardRepository : IRetroBoardRepository
 
 Always, in any non-trivial application. The debate is about **granularity**
 (per-entity vs per-aggregate) and **scope** (all operations vs write-side only).
+
+For an approach that deliberately avoids repositories, see
+[Transaction Script Pattern](transaction-script-pattern.md) — API 0
+demonstrates the same REST contract without any repository abstraction.

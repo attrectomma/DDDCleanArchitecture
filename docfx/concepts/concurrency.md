@@ -5,8 +5,8 @@
 When two users modify the same data at the same time, one of three things
 can happen:
 
-1. **Last write wins** (silent data loss) — API 1 & 2
-2. **Optimistic concurrency** (detect and reject) — API 3, 4, & 5
+1. **Last write wins** (silent data loss) — API 0a, API 1 & 2
+2. **Optimistic concurrency** (detect and reject) — API 0b (DB-level), API 3, 4, & 5
 3. **Pessimistic locking** (prevent concurrent access) — Not used in this repo
 
 ## Last Write Wins (API 1 & 2)
@@ -98,11 +98,21 @@ The client can then retry the operation (reload + reapply + save).
 
 | Tier | Strategy | Concurrent Duplicate Column | Concurrent Duplicate Vote |
 |------|----------|---------------------------|--------------------------|
+| Api0a | None | ❌ Both succeed (duplicate!) | ❌ Both succeed |
+| Api0b | DB constraints + xmin | ✅ DB unique constraint → 409 | ✅ DB unique constraint → 409 |
 | API 1 | None | ❌ Both succeed (duplicate!) | ❌ Both succeed |
 | API 2 | None | ❌ Both succeed (duplicate!) | ❌ Both succeed |
 | API 3 | Optimistic (xmin on RetroBoard) | ✅ One fails with 409 | ✅ One fails with 409 |
 | API 4 | Optimistic (xmin on RetroBoard + Vote) | ✅ One fails with 409 | ✅ DB unique constraint catches it |
 | API 5 | Same as API 4 | ✅ One fails with 409 | ✅ DB unique constraint catches it |
+
+> **Note:** Api0b and API 3+ both pass the concurrency tests, but they achieve
+> this differently. Api0b relies entirely on **database mechanisms** (unique
+> indexes + xmin + middleware catch blocks). API 3+ uses **aggregate boundaries**
+> with optimistic concurrency tokens on the aggregate root, which also provides
+> consistency guarantees for cross-entity rules that Api0b does not have.
+> See [API 0 — Transaction Script](../migration/api0-transaction-script.md)
+> for the full comparison.
 
 ## Where to Go Next
 

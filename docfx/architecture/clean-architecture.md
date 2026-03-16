@@ -2,7 +2,9 @@
 
 ## The Four Layers
 
-Every API in this repository follows the same four-layer structure:
+Every API in the main progression (API 1–5) follows the same four-layer
+structure. API 0 intentionally breaks this convention — see
+[When Four Layers Aren't Needed](#when-four-layers-arent-needed) below.
 
 ```
 ┌──────────────────────────────────────────┐
@@ -86,3 +88,22 @@ The WebApi layer defines **how users interact** — HTTP, JSON, REST.
 
 Dependencies point **inward**. Outer layers depend on inner layers, never
 the reverse. See [Dependency Rules](dependency-rules.md) for details.
+
+## When Four Layers Aren't Needed
+
+Not every application needs four layers. API 0 demonstrates the **Transaction
+Script** pattern — a single project where endpoint handlers talk directly to
+the `DbContext`. There is no Domain, Application, or Infrastructure layer.
+
+This is a valid architectural choice when:
+
+- The domain is simple (few entities, few invariants).
+- The team is small (1–3 developers).
+- Speed of development matters more than long-term maintainability.
+- You don't need unit-testable domain logic.
+
+API 0 exists as a **parallel track** to show what you gain — and what you
+give up — by adopting layered architecture. See
+[API 0 — Transaction Script](../migration/api0-transaction-script.md) and
+[Transaction Script Pattern](../patterns/transaction-script-pattern.md)
+for the full comparison.

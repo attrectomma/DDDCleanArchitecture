@@ -29,6 +29,12 @@ public class UnitOfWork : IUnitOfWork
    transaction happens.
 3. **Single responsibility** — Repos manage entities, UoW manages transactions.
 
+> **Counter-example: API 0** uses `DbContext.SaveChangesAsync()` directly in
+> each endpoint handler — no `IUnitOfWork` abstraction. This works because
+> the Transaction Script pattern has no separate application layer that needs
+> to be decoupled from the database. Each handler IS the transaction. See
+> [Transaction Script Pattern](transaction-script-pattern.md).
+
 ## Used in All APIs
 
 The Unit of Work pattern is consistent across all five tiers. What changes

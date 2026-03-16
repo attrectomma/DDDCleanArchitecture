@@ -1,9 +1,9 @@
 # Design Decisions — Cross-API Comparison
 
 > This document explains the **key architectural decisions** made across all
-> five API tiers, why each decision was made, and the trade-offs involved.
+> API tiers, why each decision was made, and the trade-offs involved.
 > Read this alongside the per-API detailed plans (`01-Api1-DetailedPlan.md`
-> through `05-Api5-DetailedPlan.md`) for full context.
+> through `06-Api0-TransactionScript-DetailedPlan.md`) for full context.
 
 ---
 
@@ -13,6 +13,7 @@
 
 | Tier | Entity Style | Rationale |
 |------|-------------|-----------|
+| API 0 | **Anemic** — public setters, no methods, no layers | Transaction Script pattern. Entities are pure property bags — EF Core mapping targets and nothing more. Same shape as API 1 but in a single project with no Domain layer. |
 | API 1 | **Anemic** — public setters, no methods | Baseline. Shows how most junior codebases start. Entities are property bags shaped by the database. |
 | API 2 | **Rich** — private setters, guard constructors, behavior methods | Demonstrates encapsulation. Rules that involve a single entity's data move into the entity itself. |
 | API 3–5 | **Rich + Aggregate awareness** | Same as API 2, but entities participate in an aggregate hierarchy. Internal entities (Column, Note) have `internal` constructors so only the aggregate root can create them. |
@@ -39,6 +40,7 @@ diff the service layer between API 1 and API 2 to see exactly what moved.
 
 | Tier | Within-Entity Rules | Cross-Entity Rules | Cross-Aggregate Rules |
 |------|--------------------|--------------------|----------------------|
+| API 0 | Endpoint handlers | Endpoint handlers | Endpoint handlers |
 | API 1 | Service layer | Service layer | Service layer |
 | API 2 | **Entity methods** | Service layer | Service layer |
 | API 3 | Entity methods | **Aggregate root** | Service layer |
@@ -69,6 +71,7 @@ layer checks first (fast, user-friendly error message), and a unique index on
 
 | Tier | Repositories | Pattern |
 |------|-------------|---------|
+| API 0 | 0 (none — DbContext directly) | Transaction Script — endpoint handlers query and mutate `DbSet<T>` directly. No repository abstraction. |
 | API 1 | 7 (one per entity) | `IUserRepository`, `IProjectRepository`, `IRetroBoardRepository`, `IColumnRepository`, `INoteRepository`, `IVoteRepository`, `IProjectMemberRepository` |
 | API 2 | 7 (same as API 1) | Same — entities are richer but repository structure unchanged |
 | API 3 | 3 (one per aggregate) | `IUserRepository`, `IProjectRepository`, `IRetroBoardRepository` |
@@ -77,6 +80,10 @@ layer checks first (fast, user-friendly error message), and a unique index on
 
 ### Rationale
 
+- **No repos** (API 0) is the simplest approach — the Transaction Script
+  pattern deliberately avoids repository abstractions. Each endpoint handler
+  talks to the `DbContext` directly. This is fast to build but provides no
+  encapsulation boundary.
 - **Per-entity repos** (API 1–2) are the intuitive starting point. But they
   allow callers to modify child entities independently of their parent,
   breaking consistency.
@@ -101,17 +108,25 @@ full aggregate graph with all Includes).
 
 | Tier | Strategy | Mechanism |
 |------|----------|-----------|
+| API 0a | None (last write wins) | No concurrency token. DB unique indexes exist but exceptions are not caught — concurrent violations return 500. |
+| API 0b | Optimistic concurrency (DB-level) | PostgreSQL `xmin` on User, Project, RetroBoard. Middleware catches `DbUpdateConcurrencyException` and `DbUpdateException` (23505). ~35 lines of diff vs. Api0a. |
 | API 1 | None (last write wins) | No concurrency token |
 | API 2 | None (last write wins) | No concurrency token |
 | API 3 | Optimistic concurrency | PostgreSQL `xmin` on aggregate roots |
 | API 4 | Optimistic concurrency | `xmin` on each aggregate root |
 | API 5 | Optimistic concurrency | Same as API 4 |
 
-### Why Not API 1 & 2?
+### Why Not API 0a, 1 & 2?
 
-Without aggregate boundaries, there is no natural "version" to check. Each
-entity is saved independently — there's no single row whose version
-represents the consistency state.
+Without aggregate boundaries (or xmin tokens in Api0a's case), there is no
+natural "version" to check. Each entity is saved independently — there's no
+single row whose version represents the consistency state.
+
+Api0b demonstrates that you **can** add concurrency tokens without aggregate
+boundaries — by applying `xmin` directly to individual entities and catching
+the resulting exceptions in middleware. This is the "database as consistency
+boundary" approach. It fixes concurrent duplicate detection but does not
+provide the cross-entity consistency guarantees that aggregates (API 3+) offer.
 
 ### Why `xmin` Instead of a Version Column?
 
@@ -286,16 +301,16 @@ filters make the correct behavior the default.
 
 ### Decision
 
-All five APIs are verified by the **same set of integration tests**. Shared
+All APIs are verified by the **same set of integration tests**. Shared
 abstract base classes in `RetroBoard.IntegrationTests.Shared` define the
 test logic, and API-specific test projects inherit them.
 
 ### Why Shared Tests?
 
 - **Identical contract** — All APIs expose the same REST surface. A test
-  that works against API 1 should work against API 5.
+  that works against API 0a should work against API 5.
 - **Demonstrates the value** — The concurrency tests intentionally fail on
-  API 1 and 2, making the improvement in API 3+ tangible.
+  API 0a, 1, and 2, making the improvement in API 0b and API 3+ tangible.
 - **Maintainability** — One set of test logic instead of five copies.
 
 ### Why Some Tests Intentionally Fail?
@@ -367,7 +382,7 @@ excludes mock-based testing:
 | Layer | Scope | Infrastructure | Tiers |
 |-------|-------|---------------|-------|
 | **Domain unit tests** | Entity/aggregate methods | None — pure in-memory | API 2–5 |
-| **Integration tests** | HTTP → Controller → Service/Handler → DB | Testcontainers (PostgreSQL), WebApplicationFactory | API 1–5 |
+| **Integration tests** | HTTP → Controller → Service/Handler → DB | Testcontainers (PostgreSQL), WebApplicationFactory | API 0–5 |
 | ~~Mock-based unit tests~~ | ~~Service/handler orchestration~~ | ~~Moq / NSubstitute~~ | ❌ Not used |
 
 ### Why No Mocking?
@@ -474,11 +489,13 @@ maintenance cost of a mock-heavy middle layer.
 
 | Scenario | Recommended Tier |
 |----------|-----------------|
-| Prototype / hackathon / tiny CRUD app | API 1 (Anemic) — speed over structure |
+| Prototype / hackathon / tiny CRUD app | API 0a (Transaction Script) — maximum speed, minimum ceremony |
+| Small team, simple domain, need concurrency safety | API 0b (Transaction Script + DB safety) — simple with protection |
+| Small team, simple domain, want layered structure | API 1 (Anemic) — layered but no concurrency |
 | Small team, simple domain, no concurrency concerns | API 2 (Rich Domain) — better encapsulation |
 | Medium domain, multiple users writing concurrently | API 3 (Aggregates) — consistency boundaries |
 | High write contention on specific entities | API 4 (Split Aggregates) — right-sized aggregates |
 | Large team, complex domain, read-heavy workload | API 5 (CQRS + MediatR) — separated concerns |
 
 > **The best architecture is the simplest one that solves your actual problems.**
-> Don't use API 5 patterns for an API 1 problem.
+> Don't use API 5 patterns for an API 0 problem.
