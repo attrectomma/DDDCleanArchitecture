@@ -129,9 +129,9 @@ Request A: "Add column 'Feedback'"     Request B: "Add column 'Feedback'"
     └─ Success                             └─ 409 Conflict
 ```
 
-This is the [Vaughn Vernon approach](https://vaughnvernon.co/): every command
+This is the [Vaughn Vernon approach](https://kalele.io/effective-aggregate-design/): every command
 that modifies the aggregate must advance its version, so that concurrent
-mutations always contend on the root's xmin. The DB unique constraint on
+mutations always contend on the root's xmin.
 `(RetroBoardId, Name)` remains as a defence-in-depth safety net, but it is no
 longer the primary concurrency mechanism.
 
