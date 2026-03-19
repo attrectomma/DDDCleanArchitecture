@@ -13,10 +13,10 @@ namespace Api3.Domain.ProjectAggregate;
 /// pass the duplicate check because there was no aggregate-level version.
 ///
 /// In API 3, Project is a true aggregate root with an optimistic concurrency
-/// token (<see cref="Version"/> mapped to PostgreSQL <c>xmin</c>). If two
-/// requests load the same Project and both try to add a member, the second
-/// <c>SaveChanges</c> will throw <c>DbUpdateConcurrencyException</c>.
-/// This is how the aggregate enforces its consistency boundary.
+/// token (<see cref="Version"/> mapped to PostgreSQL <c>xmin</c>). Every
+/// mutating method calls <see cref="BumpVersion"/> to force an UPDATE on the
+/// root row, so the second concurrent <c>SaveChanges</c> will throw
+/// <c>DbUpdateConcurrencyException</c>.
 /// </remarks>
 public class Project : AuditableEntityBase, IAggregateRoot
 {
@@ -56,6 +56,20 @@ public class Project : AuditableEntityBase, IAggregateRoot
     public IReadOnlyCollection<ProjectMember> Members => _members.AsReadOnly();
 
     /// <summary>
+    /// Forces EF Core to detect this aggregate root as Modified, which
+    /// triggers the xmin concurrency check on <c>SaveChanges</c>.
+    /// </summary>
+    /// <remarks>
+    /// DESIGN: Same pattern as <c>RetroBoard.BumpVersion()</c>. See that
+    /// method for the full rationale. Every mutating method on the aggregate
+    /// root must call this to ensure the xmin token is checked.
+    /// </remarks>
+    private void BumpVersion()
+    {
+        LastUpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Assigns a user to this project.
     /// </summary>
     /// <param name="userId">The ID of the user to add.</param>
@@ -66,7 +80,8 @@ public class Project : AuditableEntityBase, IAggregateRoot
     /// <remarks>
     /// DESIGN: Same in-memory check as API 2, but now protected by optimistic
     /// concurrency. The aggregate root is always loaded with its members
-    /// (no "forgot to include" risk), and the xmin token prevents races.
+    /// (no "forgot to include" risk), and <see cref="BumpVersion"/> ensures
+    /// the xmin token is checked even though AddMember is a child INSERT.
     /// </remarks>
     public ProjectMember AddMember(Guid userId)
     {
@@ -75,6 +90,7 @@ public class Project : AuditableEntityBase, IAggregateRoot
 
         var member = new ProjectMember(Id, userId);
         _members.Add(member);
+        BumpVersion();
         return member;
     }
 
@@ -91,6 +107,7 @@ public class Project : AuditableEntityBase, IAggregateRoot
             ?? throw new DomainException($"User {userId} is not a member of this project.");
 
         _members.Remove(member);
+        BumpVersion();
     }
 
     /// <summary>

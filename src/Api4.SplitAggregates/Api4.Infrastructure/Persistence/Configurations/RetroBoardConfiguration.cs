@@ -27,8 +27,10 @@ public class RetroBoardConfiguration : IEntityTypeConfiguration<RetroBoard>
             .HasMaxLength(300);
 
         // DESIGN: xmin concurrency token. In API 4, voting does NOT bump
-        // this token because Vote is its own aggregate. Only column and
-        // note operations on the same retro board will conflict.
+        // this token because Vote is its own aggregate. The xmin on the
+        // RetroBoard root is only checked when the root row itself is
+        // UPDATEd (e.g., renaming the retro). For child creation (adding
+        // a column/note), unique constraints are the concurrency safety net.
         builder.Property(r => r.Version)
             .HasColumnName("xmin")
             .HasColumnType("xid")

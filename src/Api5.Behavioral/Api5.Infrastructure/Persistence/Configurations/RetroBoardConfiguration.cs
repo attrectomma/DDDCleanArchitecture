@@ -37,8 +37,9 @@ public class RetroBoardConfiguration : IEntityTypeConfiguration<RetroBoard>
             .IsRequired();
 
         // DESIGN: xmin concurrency token. In API 5 (same as API 4), voting
-        // does NOT bump this token because Vote is its own aggregate.
-        // Only column and note operations conflict.
+        // does NOT bump this token because Vote is its own aggregate. The
+        // xmin is only checked when the root row itself is UPDATEd. For
+        // concurrent child creation, unique constraints are the safety net.
         builder.Property(r => r.Version)
             .HasColumnName("xmin")
             .HasColumnType("xid")

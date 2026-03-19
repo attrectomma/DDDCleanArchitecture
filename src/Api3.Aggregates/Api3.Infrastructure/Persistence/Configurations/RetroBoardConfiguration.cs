@@ -12,9 +12,10 @@ namespace Api3.Infrastructure.Persistence.Configurations;
 /// DESIGN: All entities within the RetroBoard aggregate are configured together
 /// to make the aggregate boundary visible. The aggregate root uses
 /// <see cref="NpgsqlEntityTypeBuilderExtensions.UseXminAsConcurrencyToken"/>
-/// for optimistic concurrency — any write to ANY entity in the aggregate
-/// (adding a column, renaming a note, casting a vote) goes through the root
-/// and bumps its xmin. Concurrent writes to the same retro board will conflict.
+/// for optimistic concurrency. Every mutating method on the aggregate root
+/// calls <c>BumpVersion()</c> which touches <c>LastUpdatedAt</c>, forcing
+/// EF Core to generate an UPDATE on the root row. This means every write
+/// to the aggregate — including child INSERTs — checks the root's xmin.
 ///
 /// This is the trade-off of a large aggregate: strong consistency at the cost
 /// of reduced write throughput. API 4 addresses this by extracting Vote.
@@ -33,9 +34,11 @@ public class RetroBoardConfiguration : IEntityTypeConfiguration<RetroBoard>
 
         // DESIGN: xmin is a PostgreSQL system column that changes on every
         // row update. Using it as a concurrency token means that if two
-        // requests load the same retro, the second SaveChanges will throw
-        // DbUpdateConcurrencyException. This is how we enforce the
-        // aggregate as a consistency boundary.
+        // requests load the same retro and both UPDATE this row, the second
+        // SaveChanges will throw DbUpdateConcurrencyException. The aggregate
+        // root's BumpVersion() method ensures every mutation touches the root
+        // row, so xmin is always checked — even for child INSERTs.
+        // The DB unique constraints remain as defence-in-depth safety nets.
         builder.Property(r => r.Version)
             .HasColumnName("xmin")
             .HasColumnType("xid")

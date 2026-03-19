@@ -60,14 +60,48 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     /// <remarks>
     /// DESIGN: xmin is a PostgreSQL system column that changes on every
     /// row update. Using it as a concurrency token means that if two
-    /// requests load the same retro, the second SaveChanges will throw
-    /// <c>DbUpdateConcurrencyException</c>. This is how we enforce the
-    /// aggregate as a consistency boundary.
+    /// requests load the same retro and both UPDATE this row, the second
+    /// SaveChanges will throw <c>DbUpdateConcurrencyException</c>.
+    ///
+    /// By itself, xmin is only checked when the root row is modified.
+    /// Child INSERTs (e.g., adding a column) do not trigger an UPDATE.
+    /// To close this gap, every mutating method calls <see cref="BumpVersion"/>,
+    /// which touches <see cref="AuditableEntityBase.LastUpdatedAt"/> to force
+    /// EF Core to generate an UPDATE on the root row. This is the standard
+    /// DDD approach recommended by Vaughn Vernon: the aggregate root's version
+    /// must advance on every mutation, not just root-property changes.
     /// </remarks>
     public uint Version { get; private set; }
 
     /// <summary>Gets the read-only collection of columns in this retro board.</summary>
     public IReadOnlyCollection<Column> Columns => _columns.AsReadOnly();
+
+    // ── Version bumping ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Forces EF Core to detect this aggregate root as Modified, which
+    /// triggers the xmin concurrency check on <c>SaveChanges</c>.
+    /// </summary>
+    /// <remarks>
+    /// DESIGN: Without this call, adding a child entity (Column, Note, Vote)
+    /// only generates an INSERT on the child table — the root row is untouched,
+    /// so xmin is never checked. By touching <see cref="AuditableEntityBase.LastUpdatedAt"/>,
+    /// we force an UPDATE on the root row. Two concurrent mutations to the same
+    /// aggregate now conflict via xmin, even if both are child INSERTs.
+    ///
+    /// This is the Vaughn Vernon pattern: every command that modifies the
+    /// aggregate must advance its version. The trade-off is an extra UPDATE
+    /// per write — acceptable for consistency, but it increases contention.
+    /// API 4 mitigates this by extracting Vote into its own aggregate, so
+    /// voting no longer bumps the RetroBoard’s version.
+    ///
+    /// See: Vaughn Vernon, "Implementing Domain-Driven Design" (2013),
+    /// Chapter 10 — Aggregates, "Optimistic Concurrency".
+    /// </remarks>
+    private void BumpVersion()
+    {
+        LastUpdatedAt = DateTime.UtcNow;
+    }
 
     // ── Column operations ───────────────────────────────────────
 
@@ -83,7 +117,12 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     /// <remarks>
     /// DESIGN: In API 2, this check was in the service layer (via a repository
     /// query). Now it lives here in the aggregate root. Because the full
-    /// aggregate is always loaded, the in-memory check is authoritative.
+    /// aggregate is always loaded, the in-memory check is authoritative for
+    /// non-concurrent requests. Under concurrency, <see cref="BumpVersion"/>
+    /// forces an UPDATE on the root row so the second request’s SaveChanges
+    /// detects the xmin mismatch and throws <c>DbUpdateConcurrencyException</c>.
+    /// The DB unique constraint on (RetroBoardId, Name) remains as a defence-in-depth
+    /// safety net.
     /// </remarks>
     public Column AddColumn(string name)
     {
@@ -95,6 +134,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
 
         var column = new Column(Id, name);
         _columns.Add(column);
+        BumpVersion();
         return column;
     }
 
@@ -124,6 +164,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
                 $"Column name '{newName}' already exists in retro '{Name}'.");
 
         column.Rename(newName);
+        BumpVersion();
     }
 
     /// <summary>
@@ -137,6 +178,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     {
         Column column = GetColumnOrThrow(columnId);
         _columns.Remove(column);
+        BumpVersion();
     }
 
     // ── Note operations ─────────────────────────────────────────
@@ -156,7 +198,9 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     public Note AddNote(Guid columnId, string text)
     {
         Column column = GetColumnOrThrow(columnId);
-        return column.AddNote(text);
+        Note note = column.AddNote(text);
+        BumpVersion();
+        return note;
     }
 
     /// <summary>
@@ -180,6 +224,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     {
         Column column = GetColumnOrThrow(columnId);
         column.UpdateNote(noteId, newText);
+        BumpVersion();
     }
 
     /// <summary>
@@ -194,6 +239,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     {
         Column column = GetColumnOrThrow(columnId);
         column.RemoveNote(noteId);
+        BumpVersion();
     }
 
     // ── Vote operations ─────────────────────────────────────────
@@ -212,16 +258,19 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     /// Thrown when the user has already voted on this note.
     /// </exception>
     /// <remarks>
-    /// DESIGN: The entire aggregate is locked during this operation,
+    /// DESIGN: <see cref="BumpVersion"/> forces an UPDATE on the root row,
     /// meaning two users voting on DIFFERENT notes in the same retro
-    /// will conflict. This is the "aggregate explosion" problem.
-    /// API 4 extracts Vote as its own aggregate to avoid this.
+    /// will conflict via xmin. This is the "aggregate explosion" problem —
+    /// every write contends on the root. API 4 extracts Vote as its own
+    /// aggregate to avoid this.
     /// </remarks>
     public Vote CastVote(Guid columnId, Guid noteId, Guid userId)
     {
         Column column = GetColumnOrThrow(columnId);
         Note note = column.GetNoteOrThrow(noteId);
-        return note.CastVote(userId);
+        Vote vote = note.CastVote(userId);
+        BumpVersion();
+        return vote;
     }
 
     /// <summary>
@@ -238,6 +287,7 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
         Column column = GetColumnOrThrow(columnId);
         Note note = column.GetNoteOrThrow(noteId);
         note.RemoveVote(voteId);
+        BumpVersion();
     }
 
     // ── Private helpers ─────────────────────────────────────────

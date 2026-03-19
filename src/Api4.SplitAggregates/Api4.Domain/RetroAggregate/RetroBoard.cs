@@ -59,7 +59,9 @@ public class RetroBoard : AuditableEntityBase, IAggregateRoot
     /// <remarks>
     /// DESIGN: Same as API 3. The xmin concurrency token still protects the
     /// RetroBoard aggregate — but now voting does NOT bump this token because
-    /// Vote is its own aggregate. Only column and note operations conflict.
+    /// Vote is its own aggregate. The xmin is only checked when the root row
+    /// itself is UPDATEd. For concurrent child creation (e.g., duplicate column
+    /// names), the DB unique constraint is the actual safety net.
     /// </remarks>
     public uint Version { get; private set; }
 

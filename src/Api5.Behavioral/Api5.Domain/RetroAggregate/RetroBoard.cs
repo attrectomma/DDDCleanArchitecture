@@ -83,7 +83,9 @@ public class RetroBoard : AggregateRoot
     /// <remarks>
     /// DESIGN: Same as API 3/4. The xmin concurrency token protects the
     /// RetroBoard aggregate. Voting does NOT bump this token because Vote
-    /// is its own aggregate. Only column and note operations conflict.
+    /// is its own aggregate. The xmin is only checked when the root row
+    /// itself is UPDATEd. For concurrent child creation, the DB unique
+    /// constraint is the actual safety net.
     /// </remarks>
     public uint Version { get; private set; }
 

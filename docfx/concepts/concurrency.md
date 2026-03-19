@@ -98,12 +98,13 @@ The client can then retry the operation (reload + reapply + save).
 
 Concurrency safety and consistency boundaries are **related but distinct**
 concepts. They are easy to conflate because in aggregate-based designs
-(API 3–5) a single mechanism — the xmin token on the aggregate root — provides
-both. But Api0b demonstrates that you can have one without the other.
+(API 3–5) they are often discussed together. But the mechanisms are different,
+and Api0b demonstrates that you can have one without the other.
 
 **Concurrency safety** answers: *"Can two simultaneous writes corrupt data?"*
 It prevents duplicate rows and lost updates. The mechanisms are technical:
-concurrency tokens, unique constraints, and exception handling.
+concurrency tokens (for root-row updates), unique constraints (for child
+creation), and exception handling.
 
 **Consistency boundaries** answer: *"Are business invariants guaranteed to hold
 across related entities after every transaction?"* They prevent orphaned
@@ -131,19 +132,28 @@ The xmin token on the column row only protects **that row**. The note is a
 separate row with its own (or no) xmin token. There is no shared version that
 spans the column and its notes.
 
-In API 3, both operations go through the RetroBoard aggregate, which has a
-single xmin token. Deleting a column bumps the aggregate's xmin. Adding a note
-also goes through the aggregate, sees the xmin mismatch, and fails with a 409.
+In API 3, both operations go through the RetroBoard aggregate, which loads
+the **entire graph** (columns, notes, votes). The soft-deleted column is
+excluded by EF Core's global query filter during aggregate hydration, so its
+notes become unreachable — the aggregate root cannot find the column to add a
+note to, and rejects the operation. This is a **domain-level** protection (the
+aggregate validates the full state), not an xmin-level protection (the root
+row was not necessarily UPDATEd by the delete).
 
 ### Summary
 
 | | Prevents duplicates | Prevents lost updates | Prevents cross-entity violations |
 |---|---|---|---|
 | **Api0b** (DB mechanisms only) | ✅ unique constraints | ✅ xmin per entity | ❌ no shared boundary |
-| **API 3+** (aggregates) | ✅ invariant check + xmin | ✅ xmin on aggregate root | ✅ single xmin spans all children |
+| **API 3** (aggregate + BumpVersion) | ✅ in-memory check + xmin via BumpVersion | ✅ xmin on aggregate root | ✅ aggregate groups related entities |
+| **API 4/5** (split aggregates) | ✅ in-memory check + unique constraint | ✅ xmin on each aggregate root | ✅ within aggregate; ❌ across aggregates |
 
-See [Consistency Boundaries](consistency-boundaries.md) for the full
-architectural explanation of why aggregates provide both guarantees.
+> [!NOTE]
+> API 3 uses `BumpVersion()` to force an UPDATE on the root for every mutation,
+> so xmin catches all concurrent conflicts. API 4/5 split Vote out, so
+> cross-aggregate invariants (like the budget vote limit) fall back to DB
+> constraints. See [Consistency Boundaries](consistency-boundaries.md) for
+> the full explanation of `BumpVersion()` and the split-aggregate trade-off.
 
 ## Concurrency at Each API Tier
 
@@ -153,20 +163,26 @@ architectural explanation of why aggregates provide both guarantees.
 | Api0b | DB constraints + xmin | ✅ DB unique constraint → 409 | ✅ DB unique constraint → 409 |
 | API 1 | None | ❌ Both succeed (duplicate!) | ❌ Both succeed |
 | API 2 | None | ❌ Both succeed (duplicate!) | ❌ Both succeed |
-| API 3 | Optimistic (xmin on RetroBoard) | ✅ One fails with 409 | ✅ One fails with 409 |
-| API 4 | Optimistic (xmin on RetroBoard + Vote) | ✅ One fails with 409 | ✅ DB unique constraint catches it |
-| API 5 | Same as API 4 | ✅ One fails with 409 | ✅ DB unique constraint catches it |
+| API 3 | Aggregate + BumpVersion + xmin | ✅ xmin on root → 409 | ✅ xmin on root → 409 |
+| API 4 | Split aggregates + unique constraints | ✅ DB unique constraint → 409 | ✅ DB unique constraint → 409 |
+| API 5 | Same as API 4 | ✅ DB unique constraint → 409 | ✅ DB unique constraint → 409 |
 
-> **Note:** Api0b and API 3+ both pass the concurrency tests, but they achieve
-> this differently. Api0b relies entirely on **database mechanisms** (unique
-> indexes + xmin + middleware catch blocks). API 3+ uses **aggregate boundaries**
-> with optimistic concurrency tokens on the aggregate root, which also provides
-> consistency guarantees for cross-entity rules that Api0b does not have.
-> See [API 0 — Transaction Script](../migration/api0-transaction-script.md)
-> for the full comparison.
+> **Note:** API 3 uses `BumpVersion()` to force an UPDATE on the aggregate root
+> for every mutation, so the xmin token catches all concurrent conflicts —
+> including child INSERTs. API 4/5 split Vote into its own aggregate, so voting
+> no longer goes through the RetroBoard root. For those tiers, the database
+> unique constraint is the safety net for concurrent child creation. This is the
+> explicit trade-off of smaller aggregates: you lose aggregate-level concurrency
+> detection for cross-aggregate operations.
+> See [Consistency Boundaries](consistency-boundaries.md) for the full
+> explanation of `BumpVersion()` and the split-aggregate trade-off.
 
 ## Where to Go Next
 
+- [Effective Aggregate Design](https://www.dddcommunity.org/library/vernon_2011/)
+  by Vaughn Vernon — the canonical three-part series on aggregate boundaries
+  and optimistic concurrency.
 - [Consistency Boundaries](consistency-boundaries.md) — The architectural
-  context that makes concurrency tokens meaningful.
+  context that makes concurrency tokens meaningful, including the `BumpVersion()`
+  pattern.
 - [Aggregates](aggregates.md) — Why concurrency tokens go on aggregate roots.
